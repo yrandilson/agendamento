@@ -1,25 +1,46 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { format } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+function moeda(valor) {
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
 
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
+  const [analyticsData, setAnalyticsData] = useState([])
+  const [precoPorServico, setPrecoPorServico] = useState({})
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [loading, setLoading] = useState(true)
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
     if (!sessionStorage.getItem('admin_ok')) {
       navigate('/admin')
     }
+  }, [navigate])
+
+  useEffect(() => {
+    carregarServicos()
+    carregarAnalytics()
   }, [])
 
   useEffect(() => {
     carregar()
   }, [filtroData, vizaoAtiva])
+
+  async function carregarServicos() {
+    const { data } = await supabase.from('servicos').select('nome, preco')
+    const mapa = (data || []).reduce((acc, item) => {
+      acc[item.nome] = Number(item.preco || 0)
+      return acc
+    }, {})
+    setPrecoPorServico(mapa)
+  }
 
   async function carregar() {
     setLoading(true)
@@ -39,9 +60,23 @@ export default function Admin() {
     setLoading(false)
   }
 
+  async function carregarAnalytics() {
+    setLoadingAnalytics(true)
+    const inicio = format(subDays(new Date(), 29), 'yyyy-MM-dd')
+    const { data } = await supabase
+      .from('agendamentos')
+      .select('*')
+      .gte('data', inicio)
+      .order('data', { ascending: true })
+      .order('horario', { ascending: true })
+
+    setAnalyticsData(data || [])
+    setLoadingAnalytics(false)
+  }
+
   async function atualizarStatus(id, status) {
     await supabase.from('agendamentos').update({ status }).eq('id', id)
-    carregar()
+    await Promise.all([carregar(), carregarAnalytics()])
   }
 
   async function cancelar(id) {
@@ -64,6 +99,13 @@ export default function Admin() {
   const concluidos = agendamentos.filter(a => a.status === 'concluido')
   const totalAtivos = confirmados.length + concluidos.length
   const taxaComparecimento = totalAtivos === 0 ? 0 : Math.round((concluidos.length / totalAtivos) * 100)
+
+  const faturamentoEstimado = agendamentos
+    .filter(a => a.status !== 'cancelado')
+    .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
+
+  const ticketMedio = totalAtivos === 0 ? 0 : faturamentoEstimado / totalAtivos
+
   const rankingServicos = Object.values(
     agendamentos.reduce((acc, item) => {
       if (item.status === 'cancelado') return acc
@@ -75,158 +117,269 @@ export default function Admin() {
     }, {})
   ).sort((a, b) => b.total - a.total)
 
+  const diasGrafico = Array.from({ length: 14 }, (_, i) => {
+    const dia = subDays(new Date(), 13 - i)
+    return {
+      key: format(dia, 'yyyy-MM-dd'),
+      label: format(dia, 'dd/MM')
+    }
+  })
+
+  const volumePorDia = diasGrafico.map(d => {
+    const total = analyticsData.filter(a => a.data === d.key && a.status !== 'cancelado').length
+    return { ...d, total }
+  })
+
+  const maxVolume = Math.max(1, ...volumePorDia.map(d => d.total))
+
+  const horariosPico = Object.values(
+    analyticsData.reduce((acc, item) => {
+      if (item.status === 'cancelado') return acc
+      if (!acc[item.horario]) {
+        acc[item.horario] = { horario: item.horario, total: 0 }
+      }
+      acc[item.horario].total += 1
+      return acc
+    }, {})
+  )
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6)
+
+  const maxPico = Math.max(1, ...horariosPico.map(h => h.total))
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-slate-100 md:flex">
+      <aside className="hidden md:flex md:w-64 lg:w-72 bg-slate-900 text-slate-100 flex-col p-6">
+        <h1 className="text-xl font-black tracking-wide mb-8">Painel Agendamento</h1>
+        <nav className="space-y-2">
+          <button className="w-full text-left px-3 py-2 rounded-xl bg-indigo-600 text-white font-semibold">
+            Dashboard
+          </button>
+          <button className="w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300">Agenda</button>
+          <button className="w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300">Analytics</button>
+        </nav>
+        <div className="mt-auto">
+          <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>
+          <p className="text-sm break-all text-slate-200">{window.location.origin}/</p>
+          <button onClick={sair} className="mt-4 text-sm text-red-300 hover:underline">Sair</button>
+        </div>
+      </aside>
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 pt-4">
-          <h1 className="text-2xl font-bold text-gray-800">📋 Agendamentos</h1>
-          <div className="flex items-center gap-2">
-            <button onClick={() => carregar()} className="px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 font-semibold">
-              🔄 Recarregar
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-indigo-100">Dashboard Avancado</p>
+                <h2 className="text-2xl md:text-3xl font-black">Visao de desempenho do negocio</h2>
+                <p className="text-indigo-100 mt-1">Acompanhe agenda, receita e horarios de pico em tempo real.</p>
+              </div>
+              <button
+                onClick={() => {
+                  carregar()
+                  carregarAnalytics()
+                }}
+                className="px-4 py-2 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50"
+              >
+                Recarregar
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-4 flex-wrap">
+            <button
+              onClick={() => setVizaoAtiva('hoje')}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                vizaoAtiva === 'hoje'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+              }`}
+            >
+              Hoje
             </button>
-            <button onClick={sair} className="text-sm text-red-500 hover:underline">Sair</button>
+            <button
+              onClick={() => setVizaoAtiva('proximos')}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                vizaoAtiva === 'proximos'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+              }`}
+            >
+              Proximos (confirmados)
+            </button>
+            <button
+              onClick={() => setVizaoAtiva('todos')}
+              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                vizaoAtiva === 'todos'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+              }`}
+            >
+              Todos (proximos)
+            </button>
           </div>
-        </div>
 
-        {/* Abas de visualização */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setVizaoAtiva('hoje')}
-            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-              vizaoAtiva === 'hoje'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-            }`}
-          >
-            Hoje
-          </button>
-          <button
-            onClick={() => setVizaoAtiva('proximos')}
-            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-              vizaoAtiva === 'proximos'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-            }`}
-          >
-            Próximos (confirmados)
-          </button>
-          <button
-            onClick={() => setVizaoAtiva('todos')}
-            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-              vizaoAtiva === 'todos'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-            }`}
-          >
-            Todos (próximos)
-          </button>
-        </div>
+          {vizaoAtiva === 'hoje' && (
+            <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3 flex-wrap">
+              <label className="text-gray-600 font-medium">Data:</label>
+              <input
+                type="date"
+                value={filtroData}
+                onChange={e => setFiltroData(e.target.value)}
+                className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none"
+              />
+              <span className="text-gray-400 text-sm">
+                {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
+              </span>
+            </div>
+          )}
 
-        {/* Filtro data (apenas para vizão 'hoje') */}
-        {vizaoAtiva === 'hoje' && (
-          <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3">
-            <label className="text-gray-600 font-medium">Data:</label>
-            <input type="date" value={filtroData} onChange={e => setFiltroData(e.target.value)}
-              className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none" />
-            <span className="text-gray-400 text-sm">
-              {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
-            </span>
+          <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+            <div className="bg-white rounded-2xl shadow p-4">
+              <p className="text-xs text-gray-500">Total no periodo</p>
+              <p className="text-2xl font-black text-gray-800">{agendamentos.length}</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-4">
+              <p className="text-xs text-gray-500">Confirmados</p>
+              <p className="text-2xl font-black text-green-600">{confirmados.length}</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-4">
+              <p className="text-xs text-gray-500">Concluidos</p>
+              <p className="text-2xl font-black text-blue-600">{concluidos.length}</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-4">
+              <p className="text-xs text-gray-500">Faturamento estimado</p>
+              <p className="text-xl font-black text-emerald-600">{moeda(faturamentoEstimado)}</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow p-4">
+              <p className="text-xs text-gray-500">Ticket medio</p>
+              <p className="text-xl font-black text-indigo-600">{moeda(ticketMedio)}</p>
+              <p className="text-xs text-gray-400 mt-1">Comparecimento: {taxaComparecimento}%</p>
+            </div>
           </div>
-        )}
 
-        {/* Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <div className="bg-white rounded-2xl shadow p-4">
-            <p className="text-xs text-gray-500">Total do dia</p>
-            <p className="text-2xl font-bold text-gray-800">{agendamentos.length}</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow p-4">
-            <p className="text-xs text-gray-500">Confirmados</p>
-            <p className="text-2xl font-bold text-green-600">{confirmados.length}</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow p-4">
-            <p className="text-xs text-gray-500">Concluidos</p>
-            <p className="text-2xl font-bold text-blue-600">{concluidos.length}</p>
-          </div>
-          <div className="bg-white rounded-2xl shadow p-4">
-            <p className="text-xs text-gray-500">Comparecimento</p>
-            <p className="text-2xl font-bold text-indigo-600">{taxaComparecimento}%</p>
-          </div>
-        </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+            <div className="xl:col-span-2 bg-white rounded-2xl shadow p-5">
+              <h3 className="font-bold text-gray-800 mb-4">Grafico de agendamentos (ultimos 14 dias)</h3>
+              {loadingAnalytics ? (
+                <p className="text-sm text-gray-400">Carregando grafico...</p>
+              ) : (
+                <div className="h-56 flex items-end gap-2">
+                  {volumePorDia.map(item => (
+                    <div key={item.key} className="flex-1 min-w-0 flex flex-col items-center justify-end">
+                      <div className="text-[10px] text-gray-400 mb-1">{item.total}</div>
+                      <div
+                        className="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-cyan-400"
+                        style={{ height: `${Math.max(8, Math.round((item.total / maxVolume) * 150))}px` }}
+                      />
+                      <div className="text-[10px] text-gray-500 mt-1">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-        {rankingServicos.length > 0 && (
-          <div className="bg-white rounded-2xl shadow p-4 mb-4">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Servicos mais agendados (dia)</h2>
-            <div className="space-y-2">
-              {rankingServicos.slice(0, 5).map((servico, index) => (
-                <div key={servico.nome} className="flex items-center justify-between text-sm">
-                  <p className="text-gray-700">{index + 1}. {servico.nome}</p>
-                  <span className="font-semibold text-indigo-600">{servico.total}</span>
+            <div className="bg-white rounded-2xl shadow p-5">
+              <h3 className="font-bold text-gray-800 mb-4">Horarios de pico</h3>
+              {horariosPico.length === 0 ? (
+                <p className="text-sm text-gray-400">Sem dados suficientes.</p>
+              ) : (
+                <div className="space-y-3">
+                  {horariosPico.map(item => (
+                    <div key={item.horario}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-semibold text-gray-700">{item.horario}</span>
+                        <span className="text-gray-500">{item.total}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
+                          style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {rankingServicos.length > 0 && (
+            <div className="bg-white rounded-2xl shadow p-4 mb-4">
+              <h2 className="text-sm font-semibold text-gray-700 mb-3">Top servicos no periodo</h2>
+              <div className="space-y-2">
+                {rankingServicos.slice(0, 5).map((servico, index) => (
+                  <div key={servico.nome} className="flex items-center justify-between text-sm">
+                    <p className="text-gray-700">{index + 1}. {servico.nome}</p>
+                    <span className="font-semibold text-indigo-600">{servico.total}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <p className="text-center text-gray-400 py-8">Carregando...</p>
+          ) : agendamentos.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow p-8 text-center">
+              <p className="text-gray-400 text-lg">Nenhum agendamento no periodo selecionado</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {agendamentos.map(a => (
+                <div
+                  key={a.id}
+                  className={`bg-white rounded-2xl shadow p-4 border-l-4 ${
+                    a.status === 'confirmado'
+                      ? 'border-green-400'
+                      : a.status === 'concluido'
+                        ? 'border-blue-400'
+                        : 'border-red-300 opacity-70'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-gray-800">
+                        {a.horario} — {a.nome_cliente}
+                        {vizaoAtiva !== 'hoje' && (
+                          <span className="text-sm text-gray-500 ml-2">
+                            ({format(new Date(a.data + 'T00:00:00'), 'dd/MM', { locale: ptBR })})
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-indigo-600 font-medium">{a.servico_nome}</p>
+                      <p className="text-gray-500 text-sm">{a.telefone_cliente}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          a.status === 'confirmado'
+                            ? 'bg-green-100 text-green-700'
+                            : a.status === 'concluido'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        {a.status}
+                      </span>
+                      {a.status === 'confirmado' && (
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => concluir(a.id)} className="text-xs text-blue-600 hover:underline">
+                            Concluir
+                          </button>
+                          <button onClick={() => cancelar(a.id)} className="text-xs text-red-500 hover:underline">
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Lista */}
-        {loading ? (
-          <p className="text-center text-gray-400 py-8">Carregando...</p>
-        ) : agendamentos.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow p-8 text-center">
-            <p className="text-gray-400 text-lg">Nenhum agendamento neste dia</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {agendamentos.map(a => (
-              <div key={a.id}
-                className={`bg-white rounded-2xl shadow p-4 border-l-4
-                  ${a.status === 'confirmado' ? 'border-green-400' : a.status === 'concluido' ? 'border-blue-400' : 'border-red-300 opacity-60'}`}>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-bold text-gray-800">
-                      {a.horario} — {a.nome_cliente}
-                      {vizaoAtiva !== 'hoje' && (
-                        <span className="text-sm text-gray-500 ml-2">
-                          ({format(new Date(a.data + 'T00:00:00'), 'dd/MM', { locale: ptBR })})
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-indigo-600 font-medium">{a.servico_nome}</p>
-                    <p className="text-gray-500 text-sm">📱 {a.telefone_cliente}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium
-                      ${a.status === 'confirmado' ? 'bg-green-100 text-green-700' : a.status === 'concluido' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-600'}`}>
-                      {a.status}
-                    </span>
-                    {a.status === 'confirmado' && (
-                      <div className="flex items-center gap-3">
-                        <button onClick={() => concluir(a.id)}
-                          className="text-xs text-blue-600 hover:underline">
-                          Concluir
-                        </button>
-                        <button onClick={() => cancelar(a.id)}
-                          className="text-xs text-red-500 hover:underline">
-                          Cancelar
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Link para página de agendamento */}
-        <div className="mt-6 bg-indigo-50 rounded-2xl p-4 text-center">
-          <p className="text-indigo-600 text-sm">Link para seus clientes:</p>
-          <p className="font-bold text-indigo-800 break-all">{window.location.origin}/</p>
+          )}
         </div>
-
-      </div>
+      </main>
     </div>
   )
 }
