@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -18,15 +19,22 @@ export default function Admin() {
 
   useEffect(() => {
     carregar()
-  }, [filtroData])
+  }, [filtroData, vizaoAtiva])
 
   async function carregar() {
     setLoading(true)
-    const { data } = await supabase
-      .from('agendamentos')
-      .select('*')
-      .eq('data', filtroData)
-      .order('horario', { ascending: true })
+    let query = supabase.from('agendamentos').select('*')
+
+    if (vizaoAtiva === 'hoje') {
+      query = query.eq('data', filtroData)
+    } else if (vizaoAtiva === 'proximos') {
+      const hoje = format(new Date(), 'yyyy-MM-dd')
+      query = query.gte('data', hoje).neq('status', 'cancelado')
+    } else if (vizaoAtiva === 'todos') {
+      query = query.gte('data', format(new Date(), 'yyyy-MM-dd'))
+    }
+
+    const { data } = await query.order('data', { ascending: true }).order('horario', { ascending: true })
     setAgendamentos(data || [])
     setLoading(false)
   }
@@ -74,18 +82,59 @@ export default function Admin() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6 pt-4">
           <h1 className="text-2xl font-bold text-gray-800">📋 Agendamentos</h1>
-          <button onClick={sair} className="text-sm text-red-500 hover:underline">Sair</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => carregar()} className="px-3 py-1 text-sm bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 font-semibold">
+              🔄 Recarregar
+            </button>
+            <button onClick={sair} className="text-sm text-red-500 hover:underline">Sair</button>
+          </div>
         </div>
 
-        {/* Filtro data */}
-        <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3">
-          <label className="text-gray-600 font-medium">Data:</label>
-          <input type="date" value={filtroData} onChange={e => setFiltroData(e.target.value)}
-            className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none" />
-          <span className="text-gray-400 text-sm">
-            {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
-          </span>
+        {/* Abas de visualização */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setVizaoAtiva('hoje')}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+              vizaoAtiva === 'hoje'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+            }`}
+          >
+            Hoje
+          </button>
+          <button
+            onClick={() => setVizaoAtiva('proximos')}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+              vizaoAtiva === 'proximos'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+            }`}
+          >
+            Próximos (confirmados)
+          </button>
+          <button
+            onClick={() => setVizaoAtiva('todos')}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+              vizaoAtiva === 'todos'
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+            }`}
+          >
+            Todos (próximos)
+          </button>
         </div>
+
+        {/* Filtro data (apenas para vizão 'hoje') */}
+        {vizaoAtiva === 'hoje' && (
+          <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3">
+            <label className="text-gray-600 font-medium">Data:</label>
+            <input type="date" value={filtroData} onChange={e => setFiltroData(e.target.value)}
+              className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none" />
+            <span className="text-gray-400 text-sm">
+              {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
+            </span>
+          </div>
+        )}
 
         {/* Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -136,7 +185,14 @@ export default function Admin() {
                   ${a.status === 'confirmado' ? 'border-green-400' : a.status === 'concluido' ? 'border-blue-400' : 'border-red-300 opacity-60'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-bold text-gray-800">{a.horario} — {a.nome_cliente}</p>
+                    <p className="font-bold text-gray-800">
+                      {a.horario} — {a.nome_cliente}
+                      {vizaoAtiva !== 'hoje' && (
+                        <span className="text-sm text-gray-500 ml-2">
+                          ({format(new Date(a.data + 'T00:00:00'), 'dd/MM', { locale: ptBR })})
+                        </span>
+                      )}
+                    </p>
                     <p className="text-indigo-600 font-medium">{a.servico_nome}</p>
                     <p className="text-gray-500 text-sm">📱 {a.telefone_cliente}</p>
                   </div>
