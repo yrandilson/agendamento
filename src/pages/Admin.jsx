@@ -12,6 +12,7 @@ export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [analyticsData, setAnalyticsData] = useState([])
   const [precoPorServico, setPrecoPorServico] = useState({})
+  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises'
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [loading, setLoading] = useState(true)
@@ -147,16 +148,56 @@ export default function Admin() {
 
   const maxPico = Math.max(1, ...horariosPico.map(h => h.total))
 
+  const analyticsConfirmados = analyticsData.filter(a => a.status === 'confirmado')
+  const analyticsConcluidos = analyticsData.filter(a => a.status === 'concluido')
+  const analyticsCancelados = analyticsData.filter(a => a.status === 'cancelado')
+  const analyticsAtivos = analyticsConfirmados.length + analyticsConcluidos.length
+  const analyticsTaxaComparecimento = analyticsAtivos === 0 ? 0 : Math.round((analyticsConcluidos.length / analyticsAtivos) * 100)
+  const analyticsFaturamento = analyticsData
+    .filter(a => a.status !== 'cancelado')
+    .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
+  const analyticsTicketMedio = analyticsAtivos === 0 ? 0 : analyticsFaturamento / analyticsAtivos
+
+  const rankingServicosAnalytics = Object.values(
+    analyticsData.reduce((acc, item) => {
+      if (item.status === 'cancelado') return acc
+      if (!acc[item.servico_nome]) {
+        acc[item.servico_nome] = { nome: item.servico_nome, total: 0 }
+      }
+      acc[item.servico_nome].total += 1
+      return acc
+    }, {})
+  ).sort((a, b) => b.total - a.total)
+
   return (
     <div className="min-h-screen bg-slate-100 md:flex">
       <aside className="hidden md:flex md:w-64 lg:w-72 bg-slate-900 text-slate-100 flex-col p-6">
         <h1 className="text-xl font-black tracking-wide mb-8">Painel Agendamento</h1>
         <nav className="space-y-2">
-          <button className="w-full text-left px-3 py-2 rounded-xl bg-indigo-600 text-white font-semibold">
+          <button
+            onClick={() => setSecaoAtiva('dashboard')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
             Dashboard
           </button>
-          <button className="w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300">Agenda</button>
-          <button className="w-full text-left px-3 py-2 rounded-xl bg-slate-800 text-slate-300">Analytics</button>
+          <button
+            onClick={() => setSecaoAtiva('agenda')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'agenda' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            Agenda
+          </button>
+          <button
+            onClick={() => setSecaoAtiva('analises')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'analises' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            Analises
+          </button>
         </nav>
         <div className="mt-auto">
           <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>
@@ -170,9 +211,19 @@ export default function Admin() {
           <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-widest text-indigo-100">Dashboard Avancado</p>
-                <h2 className="text-2xl md:text-3xl font-black">Visao de desempenho do negocio</h2>
-                <p className="text-indigo-100 mt-1">Acompanhe agenda, receita e horarios de pico em tempo real.</p>
+                <p className="text-xs uppercase tracking-widest text-indigo-100">
+                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : 'Analises de Performance'}
+                </p>
+                <h2 className="text-2xl md:text-3xl font-black">
+                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : 'Leitura estrategica dos resultados'}
+                </h2>
+                <p className="text-indigo-100 mt-1">
+                  {secaoAtiva === 'dashboard'
+                    ? 'Acompanhe agenda, receita e horarios de pico em tempo real.'
+                    : secaoAtiva === 'agenda'
+                      ? 'Filtre por periodo e gerencie cada atendimento com poucos cliques.'
+                      : 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'}
+                </p>
               </div>
               <button
                 onClick={() => {
@@ -186,197 +237,261 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-4 flex-wrap">
-            <button
-              onClick={() => setVizaoAtiva('hoje')}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                vizaoAtiva === 'hoje'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-              }`}
-            >
-              Hoje
-            </button>
-            <button
-              onClick={() => setVizaoAtiva('proximos')}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                vizaoAtiva === 'proximos'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-              }`}
-            >
-              Proximos (confirmados)
-            </button>
-            <button
-              onClick={() => setVizaoAtiva('todos')}
-              className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                vizaoAtiva === 'todos'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
-              }`}
-            >
-              Todos (proximos)
-            </button>
-          </div>
-
-          {vizaoAtiva === 'hoje' && (
-            <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3 flex-wrap">
-              <label className="text-gray-600 font-medium">Data:</label>
-              <input
-                type="date"
-                value={filtroData}
-                onChange={e => setFiltroData(e.target.value)}
-                className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none"
-              />
-              <span className="text-gray-400 text-sm">
-                {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
-              </span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
-            <div className="bg-white rounded-2xl shadow p-4">
-              <p className="text-xs text-gray-500">Total no periodo</p>
-              <p className="text-2xl font-black text-gray-800">{agendamentos.length}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow p-4">
-              <p className="text-xs text-gray-500">Confirmados</p>
-              <p className="text-2xl font-black text-green-600">{confirmados.length}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow p-4">
-              <p className="text-xs text-gray-500">Concluidos</p>
-              <p className="text-2xl font-black text-blue-600">{concluidos.length}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow p-4">
-              <p className="text-xs text-gray-500">Faturamento estimado</p>
-              <p className="text-xl font-black text-emerald-600">{moeda(faturamentoEstimado)}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow p-4">
-              <p className="text-xs text-gray-500">Ticket medio</p>
-              <p className="text-xl font-black text-indigo-600">{moeda(ticketMedio)}</p>
-              <p className="text-xs text-gray-400 mt-1">Comparecimento: {taxaComparecimento}%</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
-            <div className="xl:col-span-2 bg-white rounded-2xl shadow p-5">
-              <h3 className="font-bold text-gray-800 mb-4">Grafico de agendamentos (ultimos 14 dias)</h3>
-              {loadingAnalytics ? (
-                <p className="text-sm text-gray-400">Carregando grafico...</p>
-              ) : (
-                <div className="h-56 flex items-end gap-2">
-                  {volumePorDia.map(item => (
-                    <div key={item.key} className="flex-1 min-w-0 flex flex-col items-center justify-end">
-                      <div className="text-[10px] text-gray-400 mb-1">{item.total}</div>
-                      <div
-                        className="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-cyan-400"
-                        style={{ height: `${Math.max(8, Math.round((item.total / maxVolume) * 150))}px` }}
-                      />
-                      <div className="text-[10px] text-gray-500 mt-1">{item.label}</div>
-                    </div>
-                  ))}
+          {secaoAtiva === 'dashboard' && (
+            <>
+              <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Total no periodo</p>
+                  <p className="text-2xl font-black text-gray-800">{agendamentos.length}</p>
                 </div>
-              )}
-            </div>
-
-            <div className="bg-white rounded-2xl shadow p-5">
-              <h3 className="font-bold text-gray-800 mb-4">Horarios de pico</h3>
-              {horariosPico.length === 0 ? (
-                <p className="text-sm text-gray-400">Sem dados suficientes.</p>
-              ) : (
-                <div className="space-y-3">
-                  {horariosPico.map(item => (
-                    <div key={item.horario}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-semibold text-gray-700">{item.horario}</span>
-                        <span className="text-gray-500">{item.total}</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
-                          style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Confirmados</p>
+                  <p className="text-2xl font-black text-green-600">{confirmados.length}</p>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {rankingServicos.length > 0 && (
-            <div className="bg-white rounded-2xl shadow p-4 mb-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-3">Top servicos no periodo</h2>
-              <div className="space-y-2">
-                {rankingServicos.slice(0, 5).map((servico, index) => (
-                  <div key={servico.nome} className="flex items-center justify-between text-sm">
-                    <p className="text-gray-700">{index + 1}. {servico.nome}</p>
-                    <span className="font-semibold text-indigo-600">{servico.total}</span>
-                  </div>
-                ))}
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Concluidos</p>
+                  <p className="text-2xl font-black text-blue-600">{concluidos.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Faturamento estimado</p>
+                  <p className="text-xl font-black text-emerald-600">{moeda(faturamentoEstimado)}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Ticket medio</p>
+                  <p className="text-xl font-black text-indigo-600">{moeda(ticketMedio)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Comparecimento: {taxaComparecimento}%</p>
+                </div>
               </div>
-            </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+                <div className="xl:col-span-2 bg-white rounded-2xl shadow p-5">
+                  <h3 className="font-bold text-gray-800 mb-4">Grafico de agendamentos (ultimos 14 dias)</h3>
+                  {loadingAnalytics ? (
+                    <p className="text-sm text-gray-400">Carregando grafico...</p>
+                  ) : (
+                    <div className="h-56 flex items-end gap-2">
+                      {volumePorDia.map(item => (
+                        <div key={item.key} className="flex-1 min-w-0 flex flex-col items-center justify-end">
+                          <div className="text-[10px] text-gray-400 mb-1">{item.total}</div>
+                          <div
+                            className="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-cyan-400"
+                            style={{ height: `${Math.max(8, Math.round((item.total / maxVolume) * 150))}px` }}
+                          />
+                          <div className="text-[10px] text-gray-500 mt-1">{item.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl shadow p-5">
+                  <h3 className="font-bold text-gray-800 mb-4">Horarios de pico</h3>
+                  {horariosPico.length === 0 ? (
+                    <p className="text-sm text-gray-400">Sem dados suficientes.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {horariosPico.map(item => (
+                        <div key={item.horario}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-semibold text-gray-700">{item.horario}</span>
+                            <span className="text-gray-500">{item.total}</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
+                              style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
-          {loading ? (
-            <p className="text-center text-gray-400 py-8">Carregando...</p>
-          ) : agendamentos.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow p-8 text-center">
-              <p className="text-gray-400 text-lg">Nenhum agendamento no periodo selecionado</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {agendamentos.map(a => (
-                <div
-                  key={a.id}
-                  className={`bg-white rounded-2xl shadow p-4 border-l-4 ${
-                    a.status === 'confirmado'
-                      ? 'border-green-400'
-                      : a.status === 'concluido'
-                        ? 'border-blue-400'
-                        : 'border-red-300 opacity-70'
+          {secaoAtiva === 'agenda' && (
+            <>
+              <div className="flex gap-2 mb-4 flex-wrap">
+                <button
+                  onClick={() => setVizaoAtiva('hoje')}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    vizaoAtiva === 'hoje'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
                   }`}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-bold text-gray-800">
-                        {a.horario} — {a.nome_cliente}
-                        {vizaoAtiva !== 'hoje' && (
-                          <span className="text-sm text-gray-500 ml-2">
-                            ({format(new Date(a.data + 'T00:00:00'), 'dd/MM', { locale: ptBR })})
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-indigo-600 font-medium">{a.servico_nome}</p>
-                      <p className="text-gray-500 text-sm">{a.telefone_cliente}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          a.status === 'confirmado'
-                            ? 'bg-green-100 text-green-700'
-                            : a.status === 'concluido'
-                              ? 'bg-blue-100 text-blue-700'
-                              : 'bg-red-100 text-red-600'
-                        }`}
-                      >
-                        {a.status}
-                      </span>
-                      {a.status === 'confirmado' && (
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => concluir(a.id)} className="text-xs text-blue-600 hover:underline">
-                            Concluir
-                          </button>
-                          <button onClick={() => cancelar(a.id)} className="text-xs text-red-500 hover:underline">
-                            Cancelar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  Hoje
+                </button>
+                <button
+                  onClick={() => setVizaoAtiva('proximos')}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    vizaoAtiva === 'proximos'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+                  }`}
+                >
+                  Proximos (confirmados)
+                </button>
+                <button
+                  onClick={() => setVizaoAtiva('todos')}
+                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
+                    vizaoAtiva === 'todos'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-indigo-400'
+                  }`}
+                >
+                  Todos (proximos)
+                </button>
+              </div>
+
+              {vizaoAtiva === 'hoje' && (
+                <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center gap-3 flex-wrap">
+                  <label className="text-gray-600 font-medium">Data:</label>
+                  <input
+                    type="date"
+                    value={filtroData}
+                    onChange={e => setFiltroData(e.target.value)}
+                    className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none"
+                  />
+                  <span className="text-gray-400 text-sm">
+                    {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
+                  </span>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {loading ? (
+                <p className="text-center text-gray-400 py-8">Carregando...</p>
+              ) : agendamentos.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow p-8 text-center">
+                  <p className="text-gray-400 text-lg">Nenhum agendamento no periodo selecionado</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {agendamentos.map(a => (
+                    <div
+                      key={a.id}
+                      className={`bg-white rounded-2xl shadow p-4 border-l-4 ${
+                        a.status === 'confirmado'
+                          ? 'border-green-400'
+                          : a.status === 'concluido'
+                            ? 'border-blue-400'
+                            : 'border-red-300 opacity-70'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-gray-800">
+                            {a.horario} — {a.nome_cliente}
+                            {vizaoAtiva !== 'hoje' && (
+                              <span className="text-sm text-gray-500 ml-2">
+                                ({format(new Date(a.data + 'T00:00:00'), 'dd/MM', { locale: ptBR })})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-indigo-600 font-medium">{a.servico_nome}</p>
+                          <p className="text-gray-500 text-sm">{a.telefone_cliente}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              a.status === 'confirmado'
+                                ? 'bg-green-100 text-green-700'
+                                : a.status === 'concluido'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-red-100 text-red-600'
+                            }`}
+                          >
+                            {a.status}
+                          </span>
+                          {a.status === 'confirmado' && (
+                            <div className="flex items-center gap-3">
+                              <button onClick={() => concluir(a.id)} className="text-xs text-blue-600 hover:underline">
+                                Concluir
+                              </button>
+                              <button onClick={() => cancelar(a.id)} className="text-xs text-red-500 hover:underline">
+                                Cancelar
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {secaoAtiva === 'analises' && (
+            <>
+              <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Ultimos 30 dias</p>
+                  <p className="text-2xl font-black text-gray-800">{analyticsData.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Confirmados</p>
+                  <p className="text-2xl font-black text-green-600">{analyticsConfirmados.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Concluidos</p>
+                  <p className="text-2xl font-black text-blue-600">{analyticsConcluidos.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Cancelados</p>
+                  <p className="text-2xl font-black text-red-600">{analyticsCancelados.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Faturamento 30d</p>
+                  <p className="text-xl font-black text-emerald-600">{moeda(analyticsFaturamento)}</p>
+                  <p className="text-xs text-gray-400 mt-1">Ticket: {moeda(analyticsTicketMedio)} · Comparecimento: {analyticsTaxaComparecimento}%</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+                <div className="bg-white rounded-2xl shadow p-5">
+                  <h3 className="font-bold text-gray-800 mb-4">Top servicos (30 dias)</h3>
+                  {rankingServicosAnalytics.length === 0 ? (
+                    <p className="text-sm text-gray-400">Sem dados suficientes.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {rankingServicosAnalytics.slice(0, 8).map((servico, index) => (
+                        <div key={servico.nome} className="flex items-center justify-between text-sm">
+                          <p className="text-gray-700">{index + 1}. {servico.nome}</p>
+                          <span className="font-semibold text-indigo-600">{servico.total}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl shadow p-5">
+                  <h3 className="font-bold text-gray-800 mb-4">Horarios de pico (30 dias)</h3>
+                  {horariosPico.length === 0 ? (
+                    <p className="text-sm text-gray-400">Sem dados suficientes.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {horariosPico.map(item => (
+                        <div key={item.horario}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-semibold text-gray-700">{item.horario}</span>
+                            <span className="text-gray-500">{item.total}</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
+                              style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </main>
