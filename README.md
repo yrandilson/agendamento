@@ -162,6 +162,17 @@ npm run dev
    - Arquivo:
       - `src/pages/Booking.jsx`
 
+- **Login e cadastro de cliente (usuário)**
+   - Commit: `ac3d072`
+   - Alterações:
+      - Nova página de autenticação de cliente com e-mail e senha (`/cliente`)
+      - Estado de login exibido na home de agendamento
+      - Bloqueio de confirmação de agendamento para cliente não autenticado
+   - Arquivos:
+      - `src/pages/ClientAuth.jsx`
+      - `src/pages/Booking.jsx`
+      - `src/App.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
