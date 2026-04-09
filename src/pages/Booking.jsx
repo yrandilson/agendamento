@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { Link } from 'react-router-dom'
 import { format, addDays, isBefore, startOfDay } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -213,6 +214,13 @@ export default function Booking() {
             </div>
           )}
 
+        </div>
+
+        <div className="text-center mt-4">
+          <p className="text-xs text-gray-500 mb-1">Acesso do estabelecimento</p>
+          <Link to="/admin" className="text-sm font-semibold text-indigo-600 hover:underline">
+            Entrar no Painel Admin
+          </Link>
         </div>
       </div>
     </div>
