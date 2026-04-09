@@ -183,6 +183,17 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Dashboard moderno com menu lateral e graficos**
+   - Commit: `e900ec1`
+   - Alterações:
+      - Novo layout premium com menu lateral no desktop
+      - Header visual com destaque de desempenho e botão de recarregar
+      - Grafico de agendamentos dos ultimos 14 dias
+      - Painel de horarios de pico com barras de intensidade
+      - KPIs de faturamento estimado e ticket medio
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
