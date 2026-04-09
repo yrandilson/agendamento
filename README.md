@@ -154,6 +154,14 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Atalho para painel admin na página pública**
+   - Commit: `404cd7b`
+   - Alterações:
+      - Link visível "Entrar no Painel Admin" na tela inicial de agendamento
+      - Melhora a navegação para chegar ao dashboard
+   - Arquivo:
+      - `src/pages/Booking.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
