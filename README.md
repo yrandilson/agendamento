@@ -207,6 +207,16 @@ npm run dev
       - `src/pages/ClientAuth.jsx`
       - `src/pages/Booking.jsx`
 
+- **Menu lateral funcional no painel admin (Agenda e Analises)**
+   - Commit: `3cb4ee1`
+   - Alterações:
+      - Botões laterais agora mudam de seção de verdade
+      - `Dashboard`: visão executiva com KPIs e gráficos
+      - `Agenda`: gestão operacional com filtros e ações de concluir/cancelar
+      - `Analises`: leitura dos últimos 30 dias com métricas agregadas
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
