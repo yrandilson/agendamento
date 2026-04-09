@@ -31,7 +31,7 @@ export default function Booking() {
       .from('agendamentos')
       .select('horario')
       .eq('data', dia)
-      .eq('status', 'confirmado')
+      .neq('status', 'cancelado')
       .then(({ data }) => {
         if (data) setOcupados(data.map(a => a.horario))
       })

@@ -31,10 +31,19 @@ export default function Admin() {
     setLoading(false)
   }
 
+  async function atualizarStatus(id, status) {
+    await supabase.from('agendamentos').update({ status }).eq('id', id)
+    carregar()
+  }
+
   async function cancelar(id) {
     if (!confirm('Cancelar este agendamento?')) return
-    await supabase.from('agendamentos').update({ status: 'cancelado' }).eq('id', id)
-    carregar()
+    await atualizarStatus(id, 'cancelado')
+  }
+
+  async function concluir(id) {
+    if (!confirm('Marcar este agendamento como concluido?')) return
+    await atualizarStatus(id, 'concluido')
   }
 
   function sair() {
@@ -44,6 +53,7 @@ export default function Admin() {
 
   const confirmados = agendamentos.filter(a => a.status === 'confirmado')
   const cancelados = agendamentos.filter(a => a.status === 'cancelado')
+  const concluidos = agendamentos.filter(a => a.status === 'concluido')
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -61,7 +71,7 @@ export default function Admin() {
           <input type="date" value={filtroData} onChange={e => setFiltroData(e.target.value)}
             className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none" />
           <span className="text-gray-400 text-sm">
-            {confirmados.length} confirmado(s)
+            {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
           </span>
         </div>
 
@@ -77,7 +87,7 @@ export default function Admin() {
             {agendamentos.map(a => (
               <div key={a.id}
                 className={`bg-white rounded-2xl shadow p-4 border-l-4
-                  ${a.status === 'confirmado' ? 'border-green-400' : 'border-red-300 opacity-60'}`}>
+                  ${a.status === 'confirmado' ? 'border-green-400' : a.status === 'concluido' ? 'border-blue-400' : 'border-red-300 opacity-60'}`}>
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="font-bold text-gray-800">{a.horario} — {a.nome_cliente}</p>
@@ -86,14 +96,20 @@ export default function Admin() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium
-                      ${a.status === 'confirmado' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                      ${a.status === 'confirmado' ? 'bg-green-100 text-green-700' : a.status === 'concluido' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-600'}`}>
                       {a.status}
                     </span>
                     {a.status === 'confirmado' && (
-                      <button onClick={() => cancelar(a.id)}
-                        className="text-xs text-red-500 hover:underline">
-                        Cancelar
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button onClick={() => concluir(a.id)}
+                          className="text-xs text-blue-600 hover:underline">
+                          Concluir
+                        </button>
+                        <button onClick={() => cancelar(a.id)}
+                          className="text-xs text-red-500 hover:underline">
+                          Cancelar
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
