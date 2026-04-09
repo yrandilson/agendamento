@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
-import { format, addDays, isBefore, startOfDay } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const HORARIOS = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
@@ -16,6 +16,7 @@ export default function Booking() {
   const [form, setForm] = useState({ nome: '', telefone: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [authUser, setAuthUser] = useState(null)
 
   const dias = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i + 1))
 
@@ -23,6 +24,23 @@ export default function Booking() {
     supabase.from('servicos').select('*').then(({ data }) => {
       if (data) setServices(data)
     })
+  }, [])
+
+  useEffect(() => {
+    let ativo = true
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (ativo) setAuthUser(data?.user || null)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user || null)
+    })
+
+    return () => {
+      ativo = false
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => {
@@ -39,6 +57,11 @@ export default function Booking() {
   }, [selectedDate])
 
   async function confirmar() {
+    if (!authUser) {
+      setError('Faca login como cliente para confirmar o agendamento')
+      return
+    }
+
     if (!form.nome || !form.telefone) {
       setError('Preencha todos os campos')
       return
@@ -88,6 +111,26 @@ export default function Booking() {
         <div className="text-center mb-8 pt-6">
           <h1 className="text-3xl font-bold text-indigo-700">📅 Agendamento Online</h1>
           <p className="text-gray-500 mt-1">Rápido, fácil e sem precisar ligar</p>
+
+          <div className="mt-3">
+            {authUser ? (
+              <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 rounded-full px-3 py-1 text-xs">
+                <span>Cliente logado: {authUser.email}</span>
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut()
+                  }}
+                  className="font-semibold hover:underline"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <Link to="/cliente" className="text-sm font-semibold text-indigo-600 hover:underline">
+                Entrar / Criar conta de cliente
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Progress */}
