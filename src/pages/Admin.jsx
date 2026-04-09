@@ -8,6 +8,11 @@ function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function csvCell(valor) {
+  const texto = String(valor ?? '')
+  return `"${texto.replaceAll('"', '""')}"`
+}
+
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [analyticsData, setAnalyticsData] = useState([])
@@ -101,6 +106,29 @@ export default function Admin() {
     navigate('/admin')
   }
 
+  function exportarAgendaCsv() {
+    const header = ['Data', 'Horario', 'Cliente', 'Telefone', 'Servico', 'Status']
+    const linhas = agendamentos.map(item => [
+      item.data,
+      item.horario,
+      item.nome_cliente,
+      item.telefone_cliente,
+      item.servico_nome,
+      item.status
+    ])
+
+    const csv = [header, ...linhas].map(colunas => colunas.map(csvCell).join(';')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `agenda-${format(new Date(), 'yyyy-MM-dd')}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   const confirmados = agendamentos.filter(a => a.status === 'confirmado')
   const cancelados = agendamentos.filter(a => a.status === 'cancelado')
   const concluidos = agendamentos.filter(a => a.status === 'concluido')
@@ -112,6 +140,7 @@ export default function Admin() {
     .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
 
   const ticketMedio = totalAtivos === 0 ? 0 : faturamentoEstimado / totalAtivos
+  const clientesUnicosPeriodo = new Set(agendamentos.map(a => a.telefone_cliente)).size
 
   const rankingServicos = Object.values(
     agendamentos.reduce((acc, item) => {
@@ -163,6 +192,7 @@ export default function Admin() {
     .filter(a => a.status !== 'cancelado')
     .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
   const analyticsTicketMedio = analyticsAtivos === 0 ? 0 : analyticsFaturamento / analyticsAtivos
+  const analyticsClientesUnicos = new Set(analyticsData.map(a => a.telefone_cliente)).size
 
   const rankingServicosAnalytics = Object.values(
     analyticsData.reduce((acc, item) => {
@@ -195,7 +225,7 @@ export default function Admin() {
               secaoAtiva === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            {sidebarCompacta ? 'D' : 'Dashboard'}
+            {sidebarCompacta ? 'D' : '▣ Dashboard'}
           </button>
           <button
             onClick={() => setSecaoAtiva('agenda')}
@@ -203,7 +233,7 @@ export default function Admin() {
               secaoAtiva === 'agenda' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            {sidebarCompacta ? 'A' : 'Agenda'}
+            {sidebarCompacta ? 'A' : '☰ Agenda'}
           </button>
           <button
             onClick={() => setSecaoAtiva('analises')}
@@ -211,7 +241,7 @@ export default function Admin() {
               secaoAtiva === 'analises' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            {sidebarCompacta ? 'N' : 'Analises'}
+            {sidebarCompacta ? 'N' : '◉ Analises'}
           </button>
         </nav>
         <div className="mt-auto">
@@ -293,6 +323,12 @@ export default function Admin() {
                   {temaEscuro ? 'Tema claro' : 'Tema escuro'}
                 </button>
                 <button
+                  onClick={exportarAgendaCsv}
+                  className="px-4 py-2 bg-emerald-300 text-emerald-950 rounded-xl font-bold hover:bg-emerald-200"
+                >
+                  Exportar CSV
+                </button>
+                <button
                   onClick={() => {
                     carregar()
                     carregarAnalytics()
@@ -328,6 +364,10 @@ export default function Admin() {
                   <p className="text-xs text-gray-500">Ticket medio</p>
                   <p className="text-xl font-black text-indigo-600">{moeda(ticketMedio)}</p>
                   <p className="text-xs text-gray-400 mt-1">Comparecimento: {taxaComparecimento}%</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Clientes unicos</p>
+                  <p className="text-2xl font-black text-cyan-700">{clientesUnicosPeriodo}</p>
                 </div>
               </div>
 
@@ -502,7 +542,7 @@ export default function Admin() {
 
           {secaoAtiva === 'analises' && (
             <>
-              <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+              <div className="grid grid-cols-2 xl:grid-cols-6 gap-3 mb-6">
                 <div className="bg-white rounded-2xl shadow p-4">
                   <p className="text-xs text-gray-500">Ultimos 30 dias</p>
                   <p className="text-2xl font-black text-gray-800">{analyticsData.length}</p>
@@ -523,6 +563,10 @@ export default function Admin() {
                   <p className="text-xs text-gray-500">Faturamento 30d</p>
                   <p className="text-xl font-black text-emerald-600">{moeda(analyticsFaturamento)}</p>
                   <p className="text-xs text-gray-400 mt-1">Ticket: {moeda(analyticsTicketMedio)} · Comparecimento: {analyticsTaxaComparecimento}%</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Clientes unicos 30d</p>
+                  <p className="text-2xl font-black text-cyan-700">{analyticsClientesUnicos}</p>
                 </div>
               </div>
 
