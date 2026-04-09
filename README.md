@@ -230,6 +230,18 @@ npm run dev
       - `src/pages/Booking.jsx`
       - `src/App.jsx`
 
+- **Admin moderno com voltar + cliente com reagendamento rapido**
+   - Commit: `c53bb3a`
+   - Alterações:
+      - Painel admin com fundo moderno, navegação mobile e botão de voltar para o site
+      - Barra de navegação superior no mobile para evitar painel “solto”
+      - Cliente pode reagendar direto de `Minha Conta` e do histórico
+      - Booking abre com serviço pré-selecionado ao reagendar
+   - Arquivos:
+      - `src/pages/Admin.jsx`
+      - `src/pages/ClientAccount.jsx`
+      - `src/pages/Booking.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
