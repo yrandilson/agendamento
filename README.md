@@ -217,6 +217,19 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Minha Conta do cliente (perfil + historico)**
+   - Commit: `aa3d3cb`
+   - Alterações:
+      - Nova página `Minha Conta` com dados do cliente
+      - Salvamento de perfil (nome/telefone) para auto-preenchimento
+      - Lista de próximos agendamentos e histórico
+      - Cancelamento de agendamento confirmado pelo próprio cliente
+      - Atalho `Minha conta` dentro da tela de agendamento
+   - Arquivos:
+      - `src/pages/ClientAccount.jsx`
+      - `src/pages/Booking.jsx`
+      - `src/App.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
