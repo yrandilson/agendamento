@@ -12,6 +12,16 @@ function parseAgendamentoDataHora(item) {
   return new Date(`${item.data}T${item.horario}:00`)
 }
 
+function salvarRascunhoReagendamento(item) {
+  localStorage.setItem(
+    'cliente_reagendar',
+    JSON.stringify({
+      servico_id: item.servico_id,
+      servico_nome: item.servico_nome
+    })
+  )
+}
+
 export default function ClientAccount() {
   const [authUser, setAuthUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -214,14 +224,25 @@ export default function ClientAccount() {
                         </p>
                         <p className="text-xs text-slate-400 mt-1">Status: {item.status}</p>
                       </div>
-                      {item.status === 'confirmado' && (
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => cancelarAgendamento(item.id)}
-                          className="text-xs px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-semibold"
+                          onClick={() => {
+                            salvarRascunhoReagendamento(item)
+                            navigate('/agendar')
+                          }}
+                          className="text-xs px-3 py-1 rounded-lg bg-cyan-50 text-cyan-700 hover:bg-cyan-100 font-semibold"
                         >
-                          Cancelar
+                          Reagendar
                         </button>
-                      )}
+                        {item.status === 'confirmado' && (
+                          <button
+                            onClick={() => cancelarAgendamento(item.id)}
+                            className="text-xs px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-semibold"
+                          >
+                            Cancelar
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -235,12 +256,23 @@ export default function ClientAccount() {
               ) : (
                 <div className="space-y-3">
                   {historico.slice(0, 20).map(item => (
-                    <div key={item.id} className="border rounded-xl p-4">
-                      <p className="font-semibold text-slate-800">{item.servico_nome}</p>
-                      <p className="text-sm text-slate-500">
-                        {format(parseAgendamentoDataHora(item), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
-                      </p>
-                      <p className="text-xs text-slate-400 mt-1">Status: {item.status}</p>
+                    <div key={item.id} className="border rounded-xl p-4 flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-slate-800">{item.servico_nome}</p>
+                        <p className="text-sm text-slate-500">
+                          {format(parseAgendamentoDataHora(item), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">Status: {item.status}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          salvarRascunhoReagendamento(item)
+                          navigate('/agendar')
+                        }}
+                        className="text-xs px-3 py-1 rounded-lg bg-cyan-50 text-cyan-700 hover:bg-cyan-100 font-semibold"
+                      >
+                        Agendar de novo
+                      </button>
                     </div>
                   ))}
                 </div>

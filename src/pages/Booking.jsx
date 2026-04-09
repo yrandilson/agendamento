@@ -27,6 +27,25 @@ export default function Booking() {
   }, [])
 
   useEffect(() => {
+    if (services.length === 0) return
+    const raw = localStorage.getItem('cliente_reagendar')
+    if (!raw) return
+
+    try {
+      const draft = JSON.parse(raw)
+      const servico = services.find(s => s.id === draft.servico_id) || services.find(s => s.nome === draft.servico_nome)
+      if (servico) {
+        setSelectedService(servico)
+        setStep(2)
+      }
+    } catch {
+      // Ignora rascunho inválido sem bloquear o fluxo.
+    }
+
+    localStorage.removeItem('cliente_reagendar')
+  }, [services])
+
+  useEffect(() => {
     let ativo = true
 
     supabase.auth.getUser().then(({ data }) => {
