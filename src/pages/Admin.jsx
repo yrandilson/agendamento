@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { format, subDays } from 'date-fns'
+import { format, startOfMonth, subDays, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 function moeda(valor) {
@@ -13,6 +13,11 @@ function csvCell(valor) {
   return `"${texto.replaceAll('"', '""')}"`
 }
 
+function variacaoPercentual(atual, anterior) {
+  if (anterior === 0) return atual === 0 ? 0 : 100
+  return Math.round(((atual - anterior) / anterior) * 100)
+}
+
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [analyticsData, setAnalyticsData] = useState([])
@@ -20,6 +25,7 @@ export default function Admin() {
   const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises'
   const [temaEscuro, setTemaEscuro] = useState(false)
   const [sidebarCompacta, setSidebarCompacta] = useState(false)
+  const [filtroServico, setFiltroServico] = useState('todos')
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [loading, setLoading] = useState(true)
@@ -74,7 +80,7 @@ export default function Admin() {
 
   async function carregarAnalytics() {
     setLoadingAnalytics(true)
-    const inicio = format(subDays(new Date(), 29), 'yyyy-MM-dd')
+    const inicio = format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd')
     const { data } = await supabase
       .from('agendamentos')
       .select('*')
@@ -108,7 +114,7 @@ export default function Admin() {
 
   function exportarAgendaCsv() {
     const header = ['Data', 'Horario', 'Cliente', 'Telefone', 'Servico', 'Status']
-    const linhas = agendamentos.map(item => [
+    const linhas = dadosPeriodo.map(item => [
       item.data,
       item.horario,
       item.nome_cliente,
@@ -129,21 +135,26 @@ export default function Admin() {
     URL.revokeObjectURL(url)
   }
 
-  const confirmados = agendamentos.filter(a => a.status === 'confirmado')
-  const cancelados = agendamentos.filter(a => a.status === 'cancelado')
-  const concluidos = agendamentos.filter(a => a.status === 'concluido')
+  const servicosDisponiveis = Object.keys(precoPorServico)
+  const dadosPeriodo = filtroServico === 'todos'
+    ? agendamentos
+    : agendamentos.filter(a => a.servico_nome === filtroServico)
+
+  const confirmados = dadosPeriodo.filter(a => a.status === 'confirmado')
+  const cancelados = dadosPeriodo.filter(a => a.status === 'cancelado')
+  const concluidos = dadosPeriodo.filter(a => a.status === 'concluido')
   const totalAtivos = confirmados.length + concluidos.length
   const taxaComparecimento = totalAtivos === 0 ? 0 : Math.round((concluidos.length / totalAtivos) * 100)
 
-  const faturamentoEstimado = agendamentos
+  const faturamentoEstimado = dadosPeriodo
     .filter(a => a.status !== 'cancelado')
     .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
 
   const ticketMedio = totalAtivos === 0 ? 0 : faturamentoEstimado / totalAtivos
-  const clientesUnicosPeriodo = new Set(agendamentos.map(a => a.telefone_cliente)).size
+  const clientesUnicosPeriodo = new Set(dadosPeriodo.map(a => a.telefone_cliente)).size
 
   const rankingServicos = Object.values(
-    agendamentos.reduce((acc, item) => {
+    dadosPeriodo.reduce((acc, item) => {
       if (item.status === 'cancelado') return acc
       if (!acc[item.servico_nome]) {
         acc[item.servico_nome] = { nome: item.servico_nome, total: 0 }
@@ -204,6 +215,26 @@ export default function Admin() {
       return acc
     }, {})
   ).sort((a, b) => b.total - a.total)
+
+  const inicioMesAtual = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+  const inicioMesAnterior = format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd')
+  const fimMesAnterior = format(subDays(startOfMonth(new Date()), 1), 'yyyy-MM-dd')
+
+  const mesAtualData = analyticsData.filter(item => item.data >= inicioMesAtual)
+  const mesAnteriorData = analyticsData.filter(item => item.data >= inicioMesAnterior && item.data <= fimMesAnterior)
+
+  const volumeMesAtual = mesAtualData.filter(item => item.status !== 'cancelado').length
+  const volumeMesAnterior = mesAnteriorData.filter(item => item.status !== 'cancelado').length
+
+  const faturamentoMesAtual = mesAtualData
+    .filter(item => item.status !== 'cancelado')
+    .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
+  const faturamentoMesAnterior = mesAnteriorData
+    .filter(item => item.status !== 'cancelado')
+    .reduce((acc, item) => acc + Number(precoPorServico[item.servico_nome] || 0), 0)
+
+  const variacaoVolume = variacaoPercentual(volumeMesAtual, volumeMesAnterior)
+  const variacaoFaturamento = variacaoPercentual(faturamentoMesAtual, faturamentoMesAnterior)
 
   return (
     <div className={shellClass}>
@@ -343,10 +374,10 @@ export default function Admin() {
 
           {secaoAtiva === 'dashboard' && (
             <>
-              <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
+              <div className="grid grid-cols-2 xl:grid-cols-6 gap-3 mb-6">
                 <div className="bg-white rounded-2xl shadow p-4">
                   <p className="text-xs text-gray-500">Total no periodo</p>
-                  <p className="text-2xl font-black text-gray-800">{agendamentos.length}</p>
+                  <p className="text-2xl font-black text-gray-800">{dadosPeriodo.length}</p>
                 </div>
                 <div className="bg-white rounded-2xl shadow p-4">
                   <p className="text-xs text-gray-500">Confirmados</p>
@@ -460,6 +491,20 @@ export default function Admin() {
                 >
                   Todos (proximos)
                 </button>
+
+                <div className="bg-white border-2 border-gray-200 rounded-xl px-3 py-2">
+                  <label className="text-xs text-gray-500 mr-2">Servico</label>
+                  <select
+                    value={filtroServico}
+                    onChange={e => setFiltroServico(e.target.value)}
+                    className="text-sm bg-transparent outline-none"
+                  >
+                    <option value="todos">Todos</option>
+                    {servicosDisponiveis.map(nome => (
+                      <option key={nome} value={nome}>{nome}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {vizaoAtiva === 'hoje' && (
@@ -479,13 +524,13 @@ export default function Admin() {
 
               {loading ? (
                 <p className="text-center text-gray-400 py-8">Carregando...</p>
-              ) : agendamentos.length === 0 ? (
+              ) : dadosPeriodo.length === 0 ? (
                 <div className="bg-white rounded-2xl shadow p-8 text-center">
                   <p className="text-gray-400 text-lg">Nenhum agendamento no periodo selecionado</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {agendamentos.map(a => (
+                  {dadosPeriodo.map(a => (
                     <div
                       key={a.id}
                       className={`bg-white rounded-2xl shadow p-4 border-l-4 ${
@@ -542,6 +587,26 @@ export default function Admin() {
 
           {secaoAtiva === 'analises' && (
             <>
+              <div className="bg-white rounded-2xl shadow p-5 mb-4">
+                <h3 className="font-bold text-gray-800 mb-3">Comparativo mensal</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="border border-gray-100 rounded-xl p-4">
+                    <p className="text-gray-500">Volume de agendamentos</p>
+                    <p className="text-xl font-black text-slate-800">{volumeMesAtual} no mês atual</p>
+                    <p className={`mt-1 font-semibold ${variacaoVolume >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {variacaoVolume >= 0 ? '+' : ''}{variacaoVolume}% vs mês anterior ({volumeMesAnterior})
+                    </p>
+                  </div>
+                  <div className="border border-gray-100 rounded-xl p-4">
+                    <p className="text-gray-500">Faturamento estimado</p>
+                    <p className="text-xl font-black text-slate-800">{moeda(faturamentoMesAtual)} no mês atual</p>
+                    <p className={`mt-1 font-semibold ${variacaoFaturamento >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {variacaoFaturamento >= 0 ? '+' : ''}{variacaoFaturamento}% vs mês anterior ({moeda(faturamentoMesAnterior)})
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 xl:grid-cols-6 gap-3 mb-6">
                 <div className="bg-white rounded-2xl shadow p-4">
                   <p className="text-xs text-gray-500">Ultimos 30 dias</p>
