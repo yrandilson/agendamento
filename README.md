@@ -194,6 +194,19 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Landing moderna + agendamento visivel apenas com login**
+   - Commit: `b553e16`
+   - Alterações:
+      - Nova página inicial moderna em `/` com CTAs de entrada
+      - Formulario de agendamento bloqueado para usuarios nao autenticados
+      - Rota de agendamento movida para `/agendar`
+      - Visual moderno na tela de login do cliente e na tela de agendamento
+   - Arquivos:
+      - `src/pages/Home.jsx`
+      - `src/App.jsx`
+      - `src/pages/ClientAuth.jsx`
+      - `src/pages/Booking.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
