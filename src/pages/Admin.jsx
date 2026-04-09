@@ -54,6 +54,18 @@ export default function Admin() {
   const confirmados = agendamentos.filter(a => a.status === 'confirmado')
   const cancelados = agendamentos.filter(a => a.status === 'cancelado')
   const concluidos = agendamentos.filter(a => a.status === 'concluido')
+  const totalAtivos = confirmados.length + concluidos.length
+  const taxaComparecimento = totalAtivos === 0 ? 0 : Math.round((concluidos.length / totalAtivos) * 100)
+  const rankingServicos = Object.values(
+    agendamentos.reduce((acc, item) => {
+      if (item.status === 'cancelado') return acc
+      if (!acc[item.servico_nome]) {
+        acc[item.servico_nome] = { nome: item.servico_nome, total: 0 }
+      }
+      acc[item.servico_nome].total += 1
+      return acc
+    }, {})
+  ).sort((a, b) => b.total - a.total)
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -74,6 +86,40 @@ export default function Admin() {
             {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
           </span>
         </div>
+
+        {/* Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-gray-500">Total do dia</p>
+            <p className="text-2xl font-bold text-gray-800">{agendamentos.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-gray-500">Confirmados</p>
+            <p className="text-2xl font-bold text-green-600">{confirmados.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-gray-500">Concluidos</p>
+            <p className="text-2xl font-bold text-blue-600">{concluidos.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-gray-500">Comparecimento</p>
+            <p className="text-2xl font-bold text-indigo-600">{taxaComparecimento}%</p>
+          </div>
+        </div>
+
+        {rankingServicos.length > 0 && (
+          <div className="bg-white rounded-2xl shadow p-4 mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Servicos mais agendados (dia)</h2>
+            <div className="space-y-2">
+              {rankingServicos.slice(0, 5).map((servico, index) => (
+                <div key={servico.nome} className="flex items-center justify-between text-sm">
+                  <p className="text-gray-700">{index + 1}. {servico.nome}</p>
+                  <span className="font-semibold text-indigo-600">{servico.total}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Lista */}
         {loading ? (
