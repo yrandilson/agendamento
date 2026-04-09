@@ -173,6 +173,16 @@ npm run dev
       - `src/pages/Booking.jsx`
       - `src/App.jsx`
 
+- **Melhorias no dashboard — abas e botão recarregar**
+   - Commit: `7f08819`
+   - Alterações:
+      - Abas de visualização: Hoje, Próximos (confirmados), Todos
+      - Botão 🔄 Recarregar para atualizar dados manualmente
+      - Exibição de data quando visualizando múltiplos dias
+      - Melhora navegação entre agendamentos de diferentes datas
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
