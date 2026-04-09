@@ -256,6 +256,16 @@ npm run dev
       - `src/pages/Admin.jsx`
       - `src/pages/ClientAccount.jsx`
 
+- **Admin premium com exportação CSV e métricas de clientes**
+   - Commit: `8573543`
+   - Alterações:
+      - Botão `Exportar CSV` para baixar agenda atual
+      - Métrica de `Clientes unicos` no Dashboard
+      - Métrica de `Clientes unicos 30d` na seção Análises
+      - Melhorias visuais no menu lateral com marcadores
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
