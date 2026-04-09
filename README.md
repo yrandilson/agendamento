@@ -242,6 +242,20 @@ npm run dev
       - `src/pages/ClientAccount.jsx`
       - `src/pages/Booking.jsx`
 
+- **UI premium contínua: tema, sidebar recolhível e conta cliente avançada**
+   - Commit: `ada3a2d`
+   - Alterações:
+      - Painel admin com tema claro/escuro
+      - Sidebar do admin recolhível no desktop
+      - Navegação mobile mais forte com controles no topo
+      - Botão flutuante para novo agendamento manual
+      - Gráficos com animação suave de barras
+      - Minha Conta com cards de resumo e abas (Próximos/Histórico)
+      - Botão de voltar para início destacado na conta cliente
+   - Arquivos:
+      - `src/pages/Admin.jsx`
+      - `src/pages/ClientAccount.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
