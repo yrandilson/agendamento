@@ -130,6 +130,32 @@ npm run dev
 
 ---
 
+## 🧾 Registro de Funcionalidades Implementadas
+
+> Atualize esta seção a cada nova funcionalidade entregue, com commit e data.
+
+### 2026-04-09
+
+- **Concluir atendimento no painel admin**
+   - Commit: `4d703de`
+   - Alterações:
+      - Botão para marcar agendamento como `concluido`
+      - Contadores de status (confirmado, concluido, cancelado)
+      - Horários ocupados no público passam a considerar tudo que não está `cancelado`
+   - Arquivos:
+      - `src/pages/Admin.jsx`
+      - `src/pages/Booking.jsx`
+
+- **Dashboard diário no painel admin**
+   - Commit: `c08a534`
+   - Alterações:
+      - Cards com KPIs do dia (total, confirmados, concluidos, comparecimento)
+      - Ranking de serviços mais agendados no dia
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
+---
+
 ## 🛠 Personalizar para seu cliente
 
 ### Mudar nome do negócio
