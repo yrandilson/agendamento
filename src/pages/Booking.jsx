@@ -103,33 +103,60 @@ export default function Booking() {
     setStep(5)
   }
 
+  if (!authUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.2),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(99,102,241,0.2),transparent_35%),radial-gradient(circle_at_50%_85%,rgba(16,185,129,0.14),transparent_40%)]" />
+        <div className="relative max-w-2xl mx-auto pt-16">
+          <div className="bg-white/10 border border-white/20 backdrop-blur rounded-3xl p-8 text-center">
+            <p className="text-cyan-300 text-xs uppercase tracking-[0.2em] font-semibold">Area do Cliente</p>
+            <h1 className="text-3xl md:text-4xl font-black mt-3">Entre para liberar seu agendamento</h1>
+            <p className="text-slate-200 mt-3">
+              Para proteger os dados e organizar melhor os atendimentos, o formulario so aparece para clientes autenticados.
+            </p>
+
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <Link to="/cliente" className="px-6 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-black hover:bg-cyan-300 transition-all">
+                Entrar / Criar conta
+              </Link>
+              <Link to="/" className="px-6 py-3 rounded-2xl border border-white/25 bg-white/10 font-semibold hover:bg-white/20 transition-all">
+                Voltar para inicio
+              </Link>
+            </div>
+          </div>
+
+          <div className="text-center mt-5">
+            <p className="text-xs text-slate-300 mb-1">Acesso do estabelecimento</p>
+            <Link to="/admin" className="text-sm font-semibold text-cyan-300 hover:underline">
+              Entrar no Painel Admin
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-indigo-100 p-4">
       <div className="max-w-md mx-auto">
 
         {/* Header */}
         <div className="text-center mb-8 pt-6">
-          <h1 className="text-3xl font-bold text-indigo-700">📅 Agendamento Online</h1>
-          <p className="text-gray-500 mt-1">Rápido, fácil e sem precisar ligar</p>
+          <h1 className="text-3xl font-black text-slate-800">Seu Agendamento</h1>
+          <p className="text-slate-500 mt-1">Fluxo rapido em etapas para reservar seu horario</p>
 
           <div className="mt-3">
-            {authUser ? (
-              <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 rounded-full px-3 py-1 text-xs">
-                <span>Cliente logado: {authUser.email}</span>
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut()
-                  }}
-                  className="font-semibold hover:underline"
-                >
-                  Sair
-                </button>
-              </div>
-            ) : (
-              <Link to="/cliente" className="text-sm font-semibold text-indigo-600 hover:underline">
-                Entrar / Criar conta de cliente
-              </Link>
-            )}
+            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 rounded-full px-3 py-1 text-xs border border-emerald-100">
+              <span>Cliente logado: {authUser.email}</span>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                }}
+                className="font-semibold hover:underline"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </div>
 
@@ -148,7 +175,7 @@ export default function Booking() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-6">
 
           {/* Step 1: Serviço */}
           {step === 1 && (
@@ -158,7 +185,7 @@ export default function Booking() {
               <div className="space-y-3">
                 {services.map(s => (
                   <button key={s.id} onClick={() => { setSelectedService(s); setStep(2) }}
-                    className="w-full text-left p-4 border-2 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                    className="w-full text-left p-4 border-2 rounded-xl hover:border-cyan-500 hover:bg-cyan-50 transition-all">
                     <div className="font-semibold text-gray-800">{s.nome}</div>
                     <div className="text-sm text-gray-500">{s.duracao_min} min · R$ {Number(s.preco).toFixed(2)}</div>
                   </button>
@@ -175,7 +202,7 @@ export default function Booking() {
               <div className="grid grid-cols-3 gap-2">
                 {dias.map(dia => (
                   <button key={dia} onClick={() => { setSelectedDate(dia); setStep(3) }}
-                    className="p-3 border-2 rounded-xl text-center hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+                    className="p-3 border-2 rounded-xl text-center hover:border-cyan-500 hover:bg-cyan-50 transition-all">
                     <div className="text-xs text-gray-400 capitalize">{format(dia, 'EEE', { locale: ptBR })}</div>
                     <div className="font-bold text-gray-800">{format(dia, 'dd')}</div>
                     <div className="text-xs text-gray-400">{format(dia, 'MMM', { locale: ptBR })}</div>
@@ -201,7 +228,7 @@ export default function Booking() {
                       onClick={() => { setSelectedTime(h); setStep(4) }}
                       className={`p-3 border-2 rounded-xl font-medium transition-all
                         ${ocupado ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
-                          : 'hover:border-indigo-500 hover:bg-indigo-50 text-gray-700'}`}>
+                          : 'hover:border-cyan-500 hover:bg-cyan-50 text-gray-700'}`}>
                       {ocupado ? <s>{h}</s> : h}
                     </button>
                   )
@@ -216,7 +243,7 @@ export default function Booking() {
               <button onClick={() => setStep(3)} className="text-indigo-500 text-sm mb-3">← Voltar</button>
               <h2 className="text-xl font-semibold mb-4 text-gray-700">Seus dados</h2>
 
-              <div className="bg-indigo-50 rounded-xl p-3 mb-4 text-sm text-indigo-700">
+              <div className="bg-cyan-50 rounded-xl p-3 mb-4 text-sm text-cyan-800">
                 <p>🛠 <strong>{selectedService?.nome}</strong></p>
                 <p>📅 {format(selectedDate, "dd/MM/yyyy")} às {selectedTime}</p>
               </div>
@@ -224,16 +251,16 @@ export default function Booking() {
               <div className="space-y-3">
                 <input type="text" placeholder="Seu nome completo"
                   value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })}
-                  className="w-full border-2 rounded-xl p-3 focus:border-indigo-500 outline-none" />
+                  className="w-full border-2 rounded-xl p-3 focus:border-cyan-500 outline-none" />
                 <input type="tel" placeholder="WhatsApp (com DDD)"
                   value={form.telefone} onChange={e => setForm({ ...form, telefone: e.target.value })}
-                  className="w-full border-2 rounded-xl p-3 focus:border-indigo-500 outline-none" />
+                  className="w-full border-2 rounded-xl p-3 focus:border-cyan-500 outline-none" />
               </div>
 
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
               <button onClick={confirmar} disabled={loading}
-                className="w-full mt-4 bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 disabled:opacity-50 transition-all">
+                className="w-full mt-4 bg-slate-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-slate-800 disabled:opacity-50 transition-all">
                 {loading ? 'Agendando...' : 'Confirmar Agendamento ✓'}
               </button>
             </div>
@@ -251,7 +278,7 @@ export default function Booking() {
                 <p>👤 {form.nome}</p>
               </div>
               <button onClick={() => { setStep(1); setSelectedService(null); setSelectedDate(null); setSelectedTime(null); setForm({ nome: '', telefone: '' }) }}
-                className="text-indigo-600 font-semibold hover:underline">
+                className="text-cyan-700 font-semibold hover:underline">
                 Fazer outro agendamento
               </button>
             </div>
@@ -261,7 +288,7 @@ export default function Booking() {
 
         <div className="text-center mt-4">
           <p className="text-xs text-gray-500 mb-1">Acesso do estabelecimento</p>
-          <Link to="/admin" className="text-sm font-semibold text-indigo-600 hover:underline">
+          <Link to="/admin" className="text-sm font-semibold text-cyan-700 hover:underline">
             Entrar no Painel Admin
           </Link>
         </div>
