@@ -4,6 +4,7 @@ import Booking from './pages/Booking'
 import Admin from './pages/Admin'
 import AdminLogin from './pages/AdminLogin'
 import ClientAuth from './pages/ClientAuth'
+import ClientAccount from './pages/ClientAccount'
 
 export default function App() {
   return (
@@ -11,6 +12,7 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/agendar" element={<Booking />} />
       <Route path="/cliente" element={<ClientAuth />} />
+      <Route path="/minha-conta" element={<ClientAccount />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/painel" element={<Admin />} />
     </Routes>

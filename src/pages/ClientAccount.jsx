@@ -1,0 +1,254 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
+function perfilKey(userId) {
+  return `cliente_perfil_${userId}`
+}
+
+function parseAgendamentoDataHora(item) {
+  return new Date(`${item.data}T${item.horario}:00`)
+}
+
+export default function ClientAccount() {
+  const [authUser, setAuthUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [salvando, setSalvando] = useState(false)
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+  const [erro, setErro] = useState('')
+  const [msg, setMsg] = useState('')
+  const [perfil, setPerfil] = useState({ nome: '', telefone: '' })
+  const [agendamentos, setAgendamentos] = useState([])
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    let ativo = true
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!ativo) return
+      const user = data?.user || null
+      if (!user) {
+        navigate('/cliente')
+        return
+      }
+
+      setAuthUser(user)
+      const salvo = localStorage.getItem(perfilKey(user.id))
+      if (salvo) {
+        try {
+          const dados = JSON.parse(salvo)
+          setPerfil({ nome: dados.nome || '', telefone: dados.telefone || '' })
+        } catch {
+          setPerfil({ nome: '', telefone: '' })
+        }
+      }
+      setLoading(false)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user || null
+      if (!user) {
+        navigate('/cliente')
+      } else {
+        setAuthUser(user)
+      }
+    })
+
+    return () => {
+      ativo = false
+      listener.subscription.unsubscribe()
+    }
+  }, [navigate])
+
+  useEffect(() => {
+    if (!perfil.telefone) {
+      setAgendamentos([])
+      return
+    }
+    carregarHistorico(perfil.telefone)
+  }, [perfil.telefone])
+
+  async function carregarHistorico(telefone) {
+    setCarregandoHistorico(true)
+    setErro('')
+
+    const { data, error } = await supabase
+      .from('agendamentos')
+      .select('*')
+      .eq('telefone_cliente', telefone)
+      .order('data', { ascending: false })
+      .order('horario', { ascending: false })
+
+    if (error) {
+      setErro('Nao foi possivel carregar o historico do cliente.')
+      setCarregandoHistorico(false)
+      return
+    }
+
+    setAgendamentos(data || [])
+    setCarregandoHistorico(false)
+  }
+
+  async function salvarPerfil() {
+    if (!authUser) return
+    if (!perfil.nome || !perfil.telefone) {
+      setErro('Preencha nome e telefone para salvar o perfil.')
+      return
+    }
+
+    setSalvando(true)
+    setErro('')
+    setMsg('')
+
+    localStorage.setItem(perfilKey(authUser.id), JSON.stringify(perfil))
+
+    await carregarHistorico(perfil.telefone)
+    setSalvando(false)
+    setMsg('Perfil salvo com sucesso.')
+  }
+
+  async function cancelarAgendamento(id) {
+    if (!confirm('Deseja cancelar este agendamento?')) return
+    await supabase.from('agendamentos').update({ status: 'cancelado' }).eq('id', id)
+    if (perfil.telefone) {
+      await carregarHistorico(perfil.telefone)
+    }
+  }
+
+  const agora = new Date()
+  const proximos = useMemo(
+    () => agendamentos.filter(item => parseAgendamentoDataHora(item) >= agora && item.status !== 'cancelado'),
+    [agendamentos, agora]
+  )
+  const historico = useMemo(
+    () => agendamentos.filter(item => parseAgendamentoDataHora(item) < agora || item.status === 'cancelado'),
+    [agendamentos, agora]
+  )
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        Carregando conta...
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-white rounded-3xl shadow p-6 md:p-8 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black text-slate-800">Minha Conta</h1>
+              <p className="text-slate-500 text-sm mt-1">Gerencie seus dados e acompanhe seus agendamentos.</p>
+            </div>
+            <div className="flex gap-2">
+              <Link to="/agendar" className="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
+                Novo agendamento
+              </Link>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut()
+                  navigate('/cliente')
+                }}
+                className="px-4 py-2 rounded-xl bg-red-50 text-red-600 font-semibold hover:bg-red-100"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-400 mt-4">Conta: {authUser?.email}</p>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div className="bg-white rounded-3xl shadow p-6 xl:col-span-1 h-fit">
+            <h2 className="text-lg font-bold text-slate-800 mb-4">Perfil do cliente</h2>
+
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Nome completo"
+                value={perfil.nome}
+                onChange={e => setPerfil({ ...perfil, nome: e.target.value })}
+                className="w-full border-2 rounded-xl p-3 focus:border-cyan-500 outline-none"
+              />
+              <input
+                type="tel"
+                placeholder="WhatsApp com DDD"
+                value={perfil.telefone}
+                onChange={e => setPerfil({ ...perfil, telefone: e.target.value })}
+                className="w-full border-2 rounded-xl p-3 focus:border-cyan-500 outline-none"
+              />
+
+              {erro && <p className="text-sm text-red-500">{erro}</p>}
+              {msg && <p className="text-sm text-green-600">{msg}</p>}
+
+              <button
+                onClick={salvarPerfil}
+                disabled={salvando}
+                className="w-full bg-cyan-500 text-slate-900 rounded-xl py-3 font-black hover:bg-cyan-400 disabled:opacity-60"
+              >
+                {salvando ? 'Salvando...' : 'Salvar perfil'}
+              </button>
+            </div>
+          </div>
+
+          <div className="xl:col-span-2 space-y-4">
+            <div className="bg-white rounded-3xl shadow p-6">
+              <h2 className="text-lg font-bold text-slate-800 mb-4">Proximos agendamentos</h2>
+              {carregandoHistorico ? (
+                <p className="text-slate-400 text-sm">Carregando...</p>
+              ) : proximos.length === 0 ? (
+                <p className="text-slate-400 text-sm">Nenhum agendamento futuro encontrado para este telefone.</p>
+              ) : (
+                <div className="space-y-3">
+                  {proximos.map(item => (
+                    <div key={item.id} className="border rounded-xl p-4 flex justify-between items-start gap-3">
+                      <div>
+                        <p className="font-bold text-slate-800">{item.servico_nome}</p>
+                        <p className="text-sm text-slate-500">
+                          {format(parseAgendamentoDataHora(item), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">Status: {item.status}</p>
+                      </div>
+                      {item.status === 'confirmado' && (
+                        <button
+                          onClick={() => cancelarAgendamento(item.id)}
+                          className="text-xs px-3 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 font-semibold"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white rounded-3xl shadow p-6">
+              <h2 className="text-lg font-bold text-slate-800 mb-4">Historico</h2>
+              {historico.length === 0 ? (
+                <p className="text-slate-400 text-sm">Sem historico ainda.</p>
+              ) : (
+                <div className="space-y-3">
+                  {historico.slice(0, 20).map(item => (
+                    <div key={item.id} className="border rounded-xl p-4">
+                      <p className="font-semibold text-slate-800">{item.servico_nome}</p>
+                      <p className="text-sm text-slate-500">
+                        {format(parseAgendamentoDataHora(item), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR })}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Status: {item.status}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

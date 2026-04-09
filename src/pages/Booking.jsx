@@ -30,11 +30,39 @@ export default function Booking() {
     let ativo = true
 
     supabase.auth.getUser().then(({ data }) => {
-      if (ativo) setAuthUser(data?.user || null)
+      if (ativo) {
+        const user = data?.user || null
+        setAuthUser(user)
+        if (user) {
+          const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
+          if (salvo) {
+            try {
+              const perfil = JSON.parse(salvo)
+              setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
+            } catch {
+              setForm({ nome: '', telefone: '' })
+            }
+          }
+        }
+      }
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user || null)
+      const user = session?.user || null
+      setAuthUser(user)
+      if (user) {
+        const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
+        if (salvo) {
+          try {
+            const perfil = JSON.parse(salvo)
+            setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
+          } catch {
+            setForm({ nome: '', telefone: '' })
+          }
+        }
+      } else {
+        setForm({ nome: '', telefone: '' })
+      }
     })
 
     return () => {
@@ -66,6 +94,9 @@ export default function Booking() {
       setError('Preencha todos os campos')
       return
     }
+
+    localStorage.setItem(`cliente_perfil_${authUser.id}`, JSON.stringify({ nome: form.nome, telefone: form.telefone }))
+
     setLoading(true)
     setError('')
     const dia = format(selectedDate, 'yyyy-MM-dd')
@@ -146,14 +177,12 @@ export default function Booking() {
           <p className="text-slate-500 mt-1">Fluxo rapido em etapas para reservar seu horario</p>
 
           <div className="mt-3">
-            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 rounded-full px-3 py-1 text-xs border border-emerald-100">
+            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 rounded-full px-3 py-1 text-xs border border-emerald-100 flex-wrap justify-center">
               <span>Cliente logado: {authUser.email}</span>
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut()
-                }}
-                className="font-semibold hover:underline"
-              >
+              <Link to="/minha-conta" className="font-semibold text-cyan-700 hover:underline">
+                Minha conta
+              </Link>
+              <button onClick={async () => await supabase.auth.signOut()} className="font-semibold hover:underline">
                 Sair
               </button>
             </div>
