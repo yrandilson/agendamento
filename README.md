@@ -266,6 +266,16 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Admin analítico: filtro por serviço e comparativo mensal**
+   - Commit: `1c2326c`
+   - Alterações:
+      - Filtro por serviço na seção Agenda
+      - Lista e métricas da Agenda respeitam o filtro selecionado
+      - Comparativo mês atual vs mês anterior (volume e faturamento)
+      - Exibição de variação percentual de crescimento/queda
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
