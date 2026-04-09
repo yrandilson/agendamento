@@ -13,11 +13,17 @@ export default function Admin() {
   const [analyticsData, setAnalyticsData] = useState([])
   const [precoPorServico, setPrecoPorServico] = useState({})
   const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises'
+  const [temaEscuro, setTemaEscuro] = useState(false)
+  const [sidebarCompacta, setSidebarCompacta] = useState(false)
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [loading, setLoading] = useState(true)
   const [loadingAnalytics, setLoadingAnalytics] = useState(true)
   const navigate = useNavigate()
+
+  const shellClass = temaEscuro
+    ? 'min-h-screen bg-[radial-gradient(circle_at_15%_20%,#0f172a,transparent_30%),radial-gradient(circle_at_85%_5%,#1e293b,transparent_35%),#020617] text-slate-100 md:flex'
+    : 'min-h-screen bg-[radial-gradient(circle_at_15%_20%,#dbeafe,transparent_30%),radial-gradient(circle_at_85%_5%,#cffafe,transparent_35%),#f1f5f9] md:flex'
 
   useEffect(() => {
     if (!sessionStorage.getItem('admin_ok')) {
@@ -170,9 +176,18 @@ export default function Admin() {
   ).sort((a, b) => b.total - a.total)
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_15%_20%,#dbeafe,transparent_30%),radial-gradient(circle_at_85%_5%,#cffafe,transparent_35%),#f1f5f9] md:flex">
-      <aside className="hidden md:flex md:w-64 lg:w-72 bg-slate-900 text-slate-100 flex-col p-6 shadow-2xl">
-        <h1 className="text-xl font-black tracking-wide mb-8">Painel Agendamento</h1>
+    <div className={shellClass}>
+      <aside className={`hidden md:flex ${sidebarCompacta ? 'md:w-20' : 'md:w-64 lg:w-72'} bg-slate-900 text-slate-100 flex-col p-4 shadow-2xl transition-all duration-300`}>
+        <div className="flex items-center justify-between mb-8 px-2">
+          <h1 className={`text-xl font-black tracking-wide ${sidebarCompacta ? 'hidden' : 'block'}`}>Painel Agendamento</h1>
+          <button
+            onClick={() => setSidebarCompacta(!sidebarCompacta)}
+            className="text-xs px-2 py-1 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700"
+            title="Expandir/recolher menu"
+          >
+            {sidebarCompacta ? '>>' : '<<'}
+          </button>
+        </div>
         <nav className="space-y-2">
           <button
             onClick={() => setSecaoAtiva('dashboard')}
@@ -180,7 +195,7 @@ export default function Admin() {
               secaoAtiva === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            Dashboard
+            {sidebarCompacta ? 'D' : 'Dashboard'}
           </button>
           <button
             onClick={() => setSecaoAtiva('agenda')}
@@ -188,7 +203,7 @@ export default function Admin() {
               secaoAtiva === 'agenda' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            Agenda
+            {sidebarCompacta ? 'A' : 'Agenda'}
           </button>
           <button
             onClick={() => setSecaoAtiva('analises')}
@@ -196,24 +211,34 @@ export default function Admin() {
               secaoAtiva === 'analises' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
             }`}
           >
-            Analises
+            {sidebarCompacta ? 'N' : 'Analises'}
           </button>
         </nav>
         <div className="mt-auto">
-          <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>
-          <p className="text-sm break-all text-slate-200">{window.location.origin}</p>
-          <Link to="/" className="mt-3 inline-flex text-sm text-cyan-300 hover:underline">
-            Voltar para o site
-          </Link>
-          <button onClick={sair} className="mt-4 text-sm text-red-300 hover:underline">Sair</button>
+          {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
+          {!sidebarCompacta && <p className="text-sm break-all text-slate-200">{window.location.origin}</p>}
+          {!sidebarCompacta && (
+            <Link to="/" className="mt-3 inline-flex text-sm text-cyan-300 hover:underline">
+              Voltar para o site
+            </Link>
+          )}
+          <button onClick={sair} className="mt-4 text-sm text-red-300 hover:underline">{sidebarCompacta ? 'Sair' : 'Encerrar sessao'}</button>
         </div>
       </aside>
 
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white/80 backdrop-blur border border-white rounded-2xl shadow-sm p-3 mb-4 flex items-center justify-between md:hidden">
-            <Link to="/" className="text-sm font-semibold text-slate-700 hover:underline">← Voltar</Link>
-            <button onClick={sair} className="text-sm font-semibold text-red-500 hover:underline">Sair</button>
+          <div className={`backdrop-blur border rounded-2xl shadow-sm p-3 mb-4 flex items-center justify-between md:hidden ${temaEscuro ? 'bg-slate-900/70 border-slate-700' : 'bg-white/80 border-white'}`}>
+            <Link to="/" className={`text-sm font-semibold hover:underline ${temaEscuro ? 'text-cyan-300' : 'text-slate-700'}`}>← Voltar</Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setTemaEscuro(!temaEscuro)}
+                className={`text-sm font-semibold ${temaEscuro ? 'text-cyan-300' : 'text-slate-700'} hover:underline`}
+              >
+                {temaEscuro ? 'Claro' : 'Escuro'}
+              </button>
+              <button onClick={sair} className="text-sm font-semibold text-red-500 hover:underline">Sair</button>
+            </div>
           </div>
 
           <div className="flex gap-2 mb-4 md:hidden overflow-x-auto pb-1">
@@ -260,15 +285,23 @@ export default function Admin() {
                       : 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'}
                 </p>
               </div>
-              <button
-                onClick={() => {
-                  carregar()
-                  carregarAnalytics()
-                }}
-                className="px-4 py-2 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50"
-              >
-                Recarregar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTemaEscuro(!temaEscuro)}
+                  className="px-4 py-2 bg-white/15 border border-white/30 text-white rounded-xl font-bold hover:bg-white/25"
+                >
+                  {temaEscuro ? 'Tema claro' : 'Tema escuro'}
+                </button>
+                <button
+                  onClick={() => {
+                    carregar()
+                    carregarAnalytics()
+                  }}
+                  className="px-4 py-2 bg-white text-indigo-700 rounded-xl font-bold hover:bg-indigo-50"
+                >
+                  Recarregar
+                </button>
+              </div>
             </div>
           </div>
 
@@ -305,12 +338,16 @@ export default function Admin() {
                     <p className="text-sm text-gray-400">Carregando grafico...</p>
                   ) : (
                     <div className="h-56 flex items-end gap-2">
-                      {volumePorDia.map(item => (
+                      {volumePorDia.map((item, index) => (
                         <div key={item.key} className="flex-1 min-w-0 flex flex-col items-center justify-end">
                           <div className="text-[10px] text-gray-400 mb-1">{item.total}</div>
                           <div
                             className="w-full rounded-t-md bg-gradient-to-t from-indigo-600 to-cyan-400"
-                            style={{ height: `${Math.max(8, Math.round((item.total / maxVolume) * 150))}px` }}
+                            style={{
+                              height: `${Math.max(8, Math.round((item.total / maxVolume) * 150))}px`,
+                              transition: 'height 600ms ease',
+                              transitionDelay: `${index * 30}ms`
+                            }}
                           />
                           <div className="text-[10px] text-gray-500 mt-1">{item.label}</div>
                         </div>
@@ -325,7 +362,7 @@ export default function Admin() {
                     <p className="text-sm text-gray-400">Sem dados suficientes.</p>
                   ) : (
                     <div className="space-y-3">
-                      {horariosPico.map(item => (
+                      {horariosPico.map((item, index) => (
                         <div key={item.horario}>
                           <div className="flex justify-between text-sm mb-1">
                             <span className="font-semibold text-gray-700">{item.horario}</span>
@@ -334,7 +371,11 @@ export default function Admin() {
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
-                              style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
+                              style={{
+                                width: `${Math.round((item.total / maxPico) * 100)}%`,
+                                transition: 'width 700ms ease',
+                                transitionDelay: `${index * 50}ms`
+                              }}
                             />
                           </div>
                         </div>
@@ -508,7 +549,7 @@ export default function Admin() {
                     <p className="text-sm text-gray-400">Sem dados suficientes.</p>
                   ) : (
                     <div className="space-y-3">
-                      {horariosPico.map(item => (
+                      {horariosPico.map((item, index) => (
                         <div key={item.horario}>
                           <div className="flex justify-between text-sm mb-1">
                             <span className="font-semibold text-gray-700">{item.horario}</span>
@@ -517,7 +558,11 @@ export default function Admin() {
                           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-gradient-to-r from-cyan-400 to-indigo-600"
-                              style={{ width: `${Math.round((item.total / maxPico) * 100)}%` }}
+                              style={{
+                                width: `${Math.round((item.total / maxPico) * 100)}%`,
+                                transition: 'width 700ms ease',
+                                transitionDelay: `${index * 50}ms`
+                              }}
                             />
                           </div>
                         </div>
@@ -529,6 +574,13 @@ export default function Admin() {
             </>
           )}
         </div>
+
+        <Link
+          to="/agendar"
+          className="fixed bottom-5 right-5 z-20 px-5 py-3 rounded-2xl bg-cyan-400 text-slate-900 font-black shadow-xl hover:bg-cyan-300 transition-all"
+        >
+          + Novo agendamento
+        </Link>
       </main>
     </div>
   )

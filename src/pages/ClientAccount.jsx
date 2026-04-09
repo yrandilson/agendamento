@@ -31,6 +31,7 @@ export default function ClientAccount() {
   const [msg, setMsg] = useState('')
   const [perfil, setPerfil] = useState({ nome: '', telefone: '' })
   const [agendamentos, setAgendamentos] = useState([])
+  const [abaAtiva, setAbaAtiva] = useState('proximos') // 'proximos', 'historico'
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -137,6 +138,8 @@ export default function ClientAccount() {
     [agendamentos, agora]
   )
 
+  const totalCancelados = agendamentos.filter(item => item.status === 'cancelado').length
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
@@ -146,15 +149,18 @@ export default function ClientAccount() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_20%_20%,#dbeafe,transparent_35%),radial-gradient(circle_at_85%_5%,#cffafe,transparent_35%),#f8fafc] p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="bg-white rounded-3xl shadow p-6 md:p-8 mb-6">
+        <div className="bg-gradient-to-r from-slate-900 to-cyan-900 text-white rounded-3xl shadow-xl p-6 md:p-8 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-slate-800">Minha Conta</h1>
-              <p className="text-slate-500 text-sm mt-1">Gerencie seus dados e acompanhe seus agendamentos.</p>
+              <h1 className="text-2xl md:text-3xl font-black">Minha Conta</h1>
+              <p className="text-cyan-100 text-sm mt-1">Gerencie seus dados e acompanhe seus agendamentos.</p>
             </div>
             <div className="flex gap-2">
+              <Link to="/" className="px-4 py-2 rounded-xl bg-white/15 border border-white/20 text-white font-semibold hover:bg-white/25">
+                Voltar para inicio
+              </Link>
               <Link to="/agendar" className="px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
                 Novo agendamento
               </Link>
@@ -170,7 +176,26 @@ export default function ClientAccount() {
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 mt-4">Conta: {authUser?.email}</p>
+          <p className="text-xs text-cyan-100/90 mt-4">Conta: {authUser?.email}</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-slate-500">Total</p>
+            <p className="text-2xl font-black text-slate-800">{agendamentos.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-slate-500">Proximos</p>
+            <p className="text-2xl font-black text-cyan-700">{proximos.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-slate-500">Historico</p>
+            <p className="text-2xl font-black text-indigo-700">{historico.length}</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow p-4">
+            <p className="text-xs text-slate-500">Cancelados</p>
+            <p className="text-2xl font-black text-red-600">{totalCancelados}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
@@ -207,6 +232,26 @@ export default function ClientAccount() {
           </div>
 
           <div className="xl:col-span-2 space-y-4">
+            <div className="bg-white rounded-2xl shadow p-3 flex gap-2">
+              <button
+                onClick={() => setAbaAtiva('proximos')}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                  abaAtiva === 'proximos' ? 'bg-cyan-500 text-slate-900' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                Proximos
+              </button>
+              <button
+                onClick={() => setAbaAtiva('historico')}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold ${
+                  abaAtiva === 'historico' ? 'bg-cyan-500 text-slate-900' : 'bg-slate-100 text-slate-600'
+                }`}
+              >
+                Historico
+              </button>
+            </div>
+
+            {abaAtiva === 'proximos' && (
             <div className="bg-white rounded-3xl shadow p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-4">Proximos agendamentos</h2>
               {carregandoHistorico ? (
@@ -248,7 +293,9 @@ export default function ClientAccount() {
                 </div>
               )}
             </div>
+            )}
 
+            {abaAtiva === 'historico' && (
             <div className="bg-white rounded-3xl shadow p-6">
               <h2 className="text-lg font-bold text-slate-800 mb-4">Historico</h2>
               {historico.length === 0 ? (
@@ -278,6 +325,7 @@ export default function ClientAccount() {
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
       </div>
