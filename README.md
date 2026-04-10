@@ -18,6 +18,10 @@ Se você quer um passo a passo tecnico (codigo, funcoes, rotas e configuracoes) 
 
 - [Sequencia pratica de implementacao](docs/SEQUENCIA_PRATICA_IMPLEMENTACAO.md)
 
+Se voce quer o roadmap das funcionalidades essenciais (prioridades, sprints e arquitetura), leia:
+
+- [Roadmap de funcionalidades essenciais](docs/ROADMAP_FUNCIONALIDADES_ESSENCIAIS.md)
+
 ---
 
 ## 🗂 Estrutura do Projeto
