@@ -4,10 +4,6 @@ import { supabase } from '../lib/supabase'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-function perfilKey(userId) {
-  return `cliente_perfil_${userId}`
-}
-
 function parseAgendamentoDataHora(item) {
   return new Date(`${item.data}T${item.horario}:00`)
 }
@@ -46,15 +42,7 @@ export default function ClientAccount() {
       return
     }
 
-    const salvo = localStorage.getItem(perfilKey(user.id))
-    if (salvo) {
-      try {
-        const dados = JSON.parse(salvo)
-        setPerfil({ nome: dados.nome || '', telefone: dados.telefone || '' })
-      } catch {
-        setPerfil({ nome: '', telefone: '' })
-      }
-    }
+    setPerfil({ nome: '', telefone: '' })
   }
 
   useEffect(() => {
@@ -97,10 +85,10 @@ export default function ClientAccount() {
       setAgendamentos([])
       return
     }
-    carregarHistorico(authUser.id, perfil.telefone)
-  }, [authUser, perfil.telefone])
+    carregarHistorico(authUser.id)
+  }, [authUser])
 
-  async function carregarHistorico(userId, telefoneFallback) {
+  async function carregarHistorico(userId) {
     setCarregandoHistorico(true)
     setErro('')
 
@@ -110,22 +98,6 @@ export default function ClientAccount() {
       .eq('cliente_user_id', userId)
       .order('data', { ascending: false })
       .order('horario', { ascending: false })
-
-    // Fallback de compatibilidade para dados antigos sem cliente_user_id.
-    if (error && telefoneFallback) {
-      const { data: dataOld, error: errorOld } = await supabase
-        .from('agendamentos')
-        .select('*')
-        .eq('telefone_cliente', telefoneFallback)
-        .order('data', { ascending: false })
-        .order('horario', { ascending: false })
-
-      if (!errorOld) {
-        setAgendamentos(dataOld || [])
-        setCarregandoHistorico(false)
-        return
-      }
-    }
 
     if (error) {
       setErro('Nao foi possivel carregar o historico do cliente.')
@@ -156,9 +128,7 @@ export default function ClientAccount() {
       updated_at: new Date().toISOString()
     }, { onConflict: 'user_id' })
 
-    localStorage.setItem(perfilKey(authUser.id), JSON.stringify(perfil))
-
-    await carregarHistorico(authUser.id, perfil.telefone)
+    await carregarHistorico(authUser.id)
     setSalvando(false)
     setMsg('Perfil salvo com sucesso.')
   }
@@ -167,7 +137,7 @@ export default function ClientAccount() {
     if (!confirm('Deseja cancelar este agendamento?')) return
     await supabase.from('agendamentos').update({ status: 'cancelado' }).eq('id', id)
     if (authUser) {
-      await carregarHistorico(authUser.id, perfil.telefone)
+      await carregarHistorico(authUser.id)
     }
   }
 

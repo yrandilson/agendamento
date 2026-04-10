@@ -22,8 +22,9 @@ function variacaoPercentual(atual, anterior) {
 export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [analyticsData, setAnalyticsData] = useState([])
+  const [auditoriaData, setAuditoriaData] = useState([])
   const [precoPorServico, setPrecoPorServico] = useState({})
-  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises'
+  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises', 'auditoria'
   const [temaEscuro, setTemaEscuro] = useState(false)
   const [sidebarCompacta, setSidebarCompacta] = useState(false)
   const [filtroServico, setFiltroServico] = useState('todos')
@@ -61,6 +62,7 @@ export default function Admin() {
   useEffect(() => {
     carregarServicos()
     carregarAnalytics()
+    carregarAuditoria()
   }, [])
 
   useEffect(() => {
@@ -108,9 +110,19 @@ export default function Admin() {
     setLoadingAnalytics(false)
   }
 
+  async function carregarAuditoria() {
+    const { data } = await supabase
+      .from('agendamentos_auditoria')
+      .select('id, agendamento_id, status_anterior, status_novo, alterado_por, created_at')
+      .order('created_at', { ascending: false })
+      .limit(80)
+
+    setAuditoriaData(data || [])
+  }
+
   async function atualizarStatus(id, status) {
     await supabase.from('agendamentos').update({ status }).eq('id', id)
-    await Promise.all([carregar(), carregarAnalytics()])
+    await Promise.all([carregar(), carregarAnalytics(), carregarAuditoria()])
   }
 
   async function cancelar(id) {
@@ -292,6 +304,14 @@ export default function Admin() {
           >
             {sidebarCompacta ? 'N' : '◉ Analises'}
           </button>
+          <button
+            onClick={() => setSecaoAtiva('auditoria')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'auditoria' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            {sidebarCompacta ? 'L' : '⎘ Auditoria'}
+          </button>
         </nav>
         <div className="mt-auto">
           {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
@@ -345,23 +365,33 @@ export default function Admin() {
             >
               Analises
             </button>
+            <button
+              onClick={() => setSecaoAtiva('auditoria')}
+              className={`px-4 py-2 whitespace-nowrap rounded-xl font-semibold text-sm ${
+                secaoAtiva === 'auditoria' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              Auditoria
+            </button>
           </div>
 
           <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-widest text-indigo-100">
-                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : 'Analises de Performance'}
+                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : secaoAtiva === 'analises' ? 'Analises de Performance' : 'Trilha de Auditoria'}
                 </p>
                 <h2 className="text-2xl md:text-3xl font-black">
-                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : 'Leitura estrategica dos resultados'}
+                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : secaoAtiva === 'analises' ? 'Leitura estrategica dos resultados' : 'Historico de alteracoes do sistema'}
                 </h2>
                 <p className="text-indigo-100 mt-1">
                   {secaoAtiva === 'dashboard'
                     ? 'Acompanhe agenda, receita e horarios de pico em tempo real.'
                     : secaoAtiva === 'agenda'
                       ? 'Filtre por periodo e gerencie cada atendimento com poucos cliques.'
-                      : 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'}
+                      : secaoAtiva === 'analises'
+                        ? 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'
+                        : 'Quem alterou status, quando alterou e qual foi a mudanca.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -698,6 +728,51 @@ export default function Admin() {
                   )}
                 </div>
               </div>
+            </>
+          )}
+
+          {secaoAtiva === 'auditoria' && (
+            <>
+              <div className="bg-white rounded-2xl shadow p-4 mb-4 flex items-center justify-between">
+                <p className="text-sm text-gray-600">Ultimos eventos de alteracao de status</p>
+                <button
+                  onClick={carregarAuditoria}
+                  className="text-xs px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500"
+                >
+                  Atualizar auditoria
+                </button>
+              </div>
+
+              {auditoriaData.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow p-8 text-center">
+                  <p className="text-gray-400 text-lg">Sem registros de auditoria ainda</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-3 font-semibold text-slate-600">Data/Hora</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Agendamento</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Alteracao</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Ator</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {auditoriaData.map(item => (
+                          <tr key={item.id} className="border-t border-slate-100">
+                            <td className="p-3 text-slate-600">{format(new Date(item.created_at), 'dd/MM/yyyy HH:mm')}</td>
+                            <td className="p-3 text-slate-700">{item.agendamento_id}</td>
+                            <td className="p-3 text-slate-700">{item.status_anterior || '-'} → {item.status_novo}</td>
+                            <td className="p-3 text-slate-500">{item.alterado_por || 'sistema'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

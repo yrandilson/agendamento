@@ -63,15 +63,7 @@ export default function Booking() {
           if (perfilDb) {
             setForm({ nome: perfilDb.nome || '', telefone: perfilDb.telefone || '' })
           } else {
-            const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
-            if (salvo) {
-              try {
-                const perfil = JSON.parse(salvo)
-                setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
-              } catch {
-                setForm({ nome: '', telefone: '' })
-              }
-            }
+            setForm({ nome: '', telefone: '' })
           }
         }
       }
@@ -94,15 +86,7 @@ export default function Booking() {
               return
             }
 
-            const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
-            if (salvo) {
-              try {
-                const perfil = JSON.parse(salvo)
-                setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
-              } catch {
-                setForm({ nome: '', telefone: '' })
-              }
-            }
+            setForm({ nome: '', telefone: '' })
           })
       } else {
         setForm({ nome: '', telefone: '' })
@@ -119,20 +103,11 @@ export default function Booking() {
     if (!selectedDate) return
     const dia = format(selectedDate, 'yyyy-MM-dd')
     supabase.rpc('horarios_ocupados_publico', { p_data: dia }).then(({ data, error }) => {
-      if (!error && data) {
-        setOcupados(data.map(a => a.horario))
-        return
+      if (error) {
+        setOcupados([])
+      } else {
+        setOcupados((data || []).map(a => a.horario))
       }
-
-      // Fallback temporario para ambientes sem a funcao criada.
-      supabase
-        .from('agendamentos')
-        .select('horario')
-        .eq('data', dia)
-        .neq('status', 'cancelado')
-        .then(({ data: fallbackData }) => {
-          if (fallbackData) setOcupados(fallbackData.map(a => a.horario))
-        })
     })
   }, [selectedDate])
 
@@ -146,8 +121,6 @@ export default function Booking() {
       setError('Preencha todos os campos')
       return
     }
-
-    localStorage.setItem(`cliente_perfil_${authUser.id}`, JSON.stringify({ nome: form.nome, telefone: form.telefone }))
 
     await supabase.from('clientes').upsert({
       user_id: authUser.id,
