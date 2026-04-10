@@ -319,10 +319,24 @@ npm run dev
       - `supabase_security_migration_step2.sql`
       - `src/pages/Booking.jsx`
 
+- **Hardening etapa 3: RLS estrita e auditoria no admin**
+   - Commit: `35ed4c4`
+   - Alterações:
+      - Script SQL de etapa 3 para remover exceções de legado
+      - `cliente_user_id` passa a ser obrigatório em `agendamentos`
+      - Frontend sem fallback legado de perfil/histórico
+      - Nova seção `Auditoria` no painel admin (histórico de alterações)
+   - Arquivos:
+      - `supabase_security_rules_step3.sql`
+      - `src/pages/Booking.jsx`
+      - `src/pages/ClientAccount.jsx`
+      - `src/pages/Admin.jsx`
+
 > Importante: execute no Supabase, em ordem, os arquivos:
 > 1) `supabase_security_rules.sql`
 > 2) `supabase_security_rules_step2.sql`
 > 3) `supabase_security_migration_step2.sql`
+> 4) `supabase_security_rules_step3.sql`
 
 ---
 
