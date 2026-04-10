@@ -4,6 +4,20 @@
 
 Sistema completo para clínicas, barbearias, salões e qualquer negócio que precisa de agendamento.
 
+## 📘 Documento de Evolução
+
+Se você quer aprender o projeto por etapas, como se estivesse começando do zero, leia o guia:
+
+- [Fluxo de desenvolvimento do zero](docs/FLUXO_DESENVOLVIMENTO_DO_ZERO.md)
+
+Se você quer simular como trabalhar em equipe no mesmo projeto, leia também:
+
+- [Fluxo de desenvolvimento em equipe](docs/FLUXO_DE_DESENVOLVIMENTO_EM_EQUIPE.md)
+
+Se você quer um passo a passo tecnico (codigo, funcoes, rotas e configuracoes) como se fosse implementar do zero, leia:
+
+- [Sequencia pratica de implementacao](docs/SEQUENCIA_PRATICA_IMPLEMENTACAO.md)
+
 ---
 
 ## 🗂 Estrutura do Projeto
@@ -135,6 +149,27 @@ npm run dev
 > Atualize esta seção a cada nova funcionalidade entregue, com commit e data.
 
 ### 2026-04-09
+
+- **Agenda admin com busca inteligente e atalho WhatsApp**
+   - Commit: `pendente`
+   - Alterações:
+      - Campo de busca na seção Agenda para filtrar por nome, telefone e serviço
+      - Lista da agenda passa a respeitar o filtro de busca em tempo real
+      - Atalho `WhatsApp rapido` em cada card de agendamento
+      - Normalização automática do telefone para abrir link `wa.me`
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
+- **Documentação sincronizada da nova entrega**
+   - Commit: `pendente`
+   - Alterações:
+      - Correção do link do guia de trabalho em equipe
+      - Atualização dos guias técnicos com o novo fluxo da agenda
+   - Arquivos:
+      - `README.md`
+      - `docs/SEQUENCIA_PRATICA_IMPLEMENTACAO.md`
+      - `docs/FLUXO_DESENVOLVIMENTO_DO_ZERO.md`
+      - `docs/FLUXO_DE_DESENVOLVIMENTO_EM_EQUIPE.md`
 
 - **Concluir atendimento no painel admin**
    - Commit: `4d703de`
