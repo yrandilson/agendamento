@@ -241,6 +241,9 @@ Funcoes principais no arquivo:
 10. `exportarAgendaCsv()`
 11. `normalizarTelefone(telefone)`
 12. `urlWhatsApp(telefone, nomeCliente)`
+13. `carregarEquipeAdmins()`
+14. `adicionarAdmin(e)`
+15. `alternarAtivoAdmin(admin)`
 
 Ordem recomendada de implementacao:
 
@@ -251,7 +254,8 @@ Ordem recomendada de implementacao:
 5. acoes de status
 6. analytics
 7. auditoria
-8. exportacao CSV
+8. gestao de equipe admin (listar, adicionar, ativar/desativar)
+9. exportacao CSV
 
 Validacao:
 
@@ -261,6 +265,7 @@ Validacao:
 - status altera sem erro
 - analytics carrega
 - auditoria aparece
+- equipe de admins pode ser gerenciada no proprio painel
 
 ## Etapa 9 - Hardening do banco (sequencia obrigatoria)
 
@@ -272,6 +277,7 @@ Ordem de execucao no Supabase:
 2. `supabase_security_rules_step2.sql`
 3. `supabase_security_migration_step2.sql`
 4. `supabase_security_rules_step3.sql`
+5. `supabase_security_rules_step4.sql`
 
 O que cada etapa entrega:
 
@@ -279,6 +285,7 @@ O que cada etapa entrega:
 2. ownership real por `cliente_user_id`
 3. migracao de legado + RPC publica segura para horarios ocupados
 4. RLS estrita sem excecao de legado
+5. governanca de admins com policies de leitura/escrita para o grupo admin
 
 Validacao:
 

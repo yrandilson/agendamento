@@ -36,14 +36,19 @@ export default function Admin() {
   const [agendamentos, setAgendamentos] = useState([])
   const [analyticsData, setAnalyticsData] = useState([])
   const [auditoriaData, setAuditoriaData] = useState([])
+  const [adminsEquipe, setAdminsEquipe] = useState([])
   const [precoPorServico, setPrecoPorServico] = useState({})
-  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises', 'auditoria'
+  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises', 'auditoria', 'equipe'
   const [temaEscuro, setTemaEscuro] = useState(false)
   const [sidebarCompacta, setSidebarCompacta] = useState(false)
   const [filtroServico, setFiltroServico] = useState('todos')
   const [filtroBusca, setFiltroBusca] = useState('')
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
+  const [novoAdminEmail, setNovoAdminEmail] = useState('')
+  const [loadingEquipe, setLoadingEquipe] = useState(false)
+  const [erroEquipe, setErroEquipe] = useState('')
+  const [msgEquipe, setMsgEquipe] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadingAnalytics, setLoadingAnalytics] = useState(true)
   const navigate = useNavigate()
@@ -82,6 +87,12 @@ export default function Admin() {
   useEffect(() => {
     carregar()
   }, [filtroData, vizaoAtiva])
+
+  useEffect(() => {
+    if (secaoAtiva === 'equipe') {
+      carregarEquipeAdmins()
+    }
+  }, [secaoAtiva])
 
   async function carregarServicos() {
     const { data } = await supabase.from('servicos').select('nome, preco')
@@ -132,6 +143,65 @@ export default function Admin() {
       .limit(80)
 
     setAuditoriaData(data || [])
+  }
+
+  async function carregarEquipeAdmins() {
+    setLoadingEquipe(true)
+    setErroEquipe('')
+
+    const { data, error } = await supabase
+      .from('admins')
+      .select('id, email, user_id, ativo, created_at')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setErroEquipe('Nao foi possivel carregar os administradores. Confirme se a etapa 4 de seguranca foi executada no Supabase.')
+      setLoadingEquipe(false)
+      return
+    }
+
+    setAdminsEquipe(data || [])
+    setLoadingEquipe(false)
+  }
+
+  async function adicionarAdmin(e) {
+    e.preventDefault()
+    setErroEquipe('')
+    setMsgEquipe('')
+
+    const email = novoAdminEmail.trim().toLowerCase()
+    if (!email) {
+      setErroEquipe('Informe um e-mail para adicionar o admin.')
+      return
+    }
+
+    const { error } = await supabase.from('admins').insert({ email, ativo: true })
+    if (error) {
+      setErroEquipe('Nao foi possivel adicionar admin. Verifique permissoes/policies e se o e-mail ja existe.')
+      return
+    }
+
+    setNovoAdminEmail('')
+    setMsgEquipe('Administrador adicionado com sucesso.')
+    await carregarEquipeAdmins()
+  }
+
+  async function alternarAtivoAdmin(admin) {
+    setErroEquipe('')
+    setMsgEquipe('')
+
+    const { error } = await supabase
+      .from('admins')
+      .update({ ativo: !admin.ativo, updated_at: new Date().toISOString() })
+      .eq('id', admin.id)
+
+    if (error) {
+      setErroEquipe('Nao foi possivel atualizar o status do admin.')
+      return
+    }
+
+    setMsgEquipe(`Status do admin ${admin.email} atualizado.`)
+    await carregarEquipeAdmins()
   }
 
   async function atualizarStatus(id, status) {
@@ -334,6 +404,14 @@ export default function Admin() {
           >
             {sidebarCompacta ? 'L' : '⎘ Auditoria'}
           </button>
+          <button
+            onClick={() => setSecaoAtiva('equipe')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'equipe' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            {sidebarCompacta ? 'E' : '👥 Equipe'}
+          </button>
         </nav>
         <div className="mt-auto">
           {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
@@ -395,16 +473,24 @@ export default function Admin() {
             >
               Auditoria
             </button>
+            <button
+              onClick={() => setSecaoAtiva('equipe')}
+              className={`px-4 py-2 whitespace-nowrap rounded-xl font-semibold text-sm ${
+                secaoAtiva === 'equipe' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              Equipe
+            </button>
           </div>
 
           <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-widest text-indigo-100">
-                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : secaoAtiva === 'analises' ? 'Analises de Performance' : 'Trilha de Auditoria'}
+                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : secaoAtiva === 'analises' ? 'Analises de Performance' : secaoAtiva === 'auditoria' ? 'Trilha de Auditoria' : 'Gestao de Equipe'}
                 </p>
                 <h2 className="text-2xl md:text-3xl font-black">
-                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : secaoAtiva === 'analises' ? 'Leitura estrategica dos resultados' : 'Historico de alteracoes do sistema'}
+                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : secaoAtiva === 'analises' ? 'Leitura estrategica dos resultados' : secaoAtiva === 'auditoria' ? 'Historico de alteracoes do sistema' : 'Administradores e permissoes'}
                 </h2>
                 <p className="text-indigo-100 mt-1">
                   {secaoAtiva === 'dashboard'
@@ -413,7 +499,9 @@ export default function Admin() {
                       ? 'Filtre por periodo e gerencie cada atendimento com poucos cliques.'
                       : secaoAtiva === 'analises'
                         ? 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'
-                        : 'Quem alterou status, quando alterou e qual foi a mudanca.'}
+                        : secaoAtiva === 'auditoria'
+                          ? 'Quem alterou status, quando alterou e qual foi a mudanca.'
+                          : 'Adicione admins, acompanhe status ativo e controle o acesso ao painel.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -809,6 +897,101 @@ export default function Admin() {
                             <td className="p-3 text-slate-700">{item.agendamento_id}</td>
                             <td className="p-3 text-slate-700">{item.status_anterior || '-'} → {item.status_novo}</td>
                             <td className="p-3 text-slate-500">{item.alterado_por || 'sistema'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {secaoAtiva === 'equipe' && (
+            <>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-4">
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Total de administradores</p>
+                  <p className="text-2xl font-black text-slate-800">{adminsEquipe.length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Admins ativos</p>
+                  <p className="text-2xl font-black text-emerald-600">{adminsEquipe.filter(a => a.ativo).length}</p>
+                </div>
+                <div className="bg-white rounded-2xl shadow p-4">
+                  <p className="text-xs text-gray-500">Admins inativos</p>
+                  <p className="text-2xl font-black text-red-600">{adminsEquipe.filter(a => !a.ativo).length}</p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow p-5 mb-4">
+                <h3 className="font-bold text-slate-800 mb-3">Adicionar novo admin</h3>
+                <form onSubmit={adicionarAdmin} className="flex flex-wrap gap-2">
+                  <input
+                    type="email"
+                    value={novoAdminEmail}
+                    onChange={e => setNovoAdminEmail(e.target.value)}
+                    placeholder="email@empresa.com"
+                    className="flex-1 min-w-[260px] border-2 border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-500"
+                  >
+                    Adicionar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={carregarEquipeAdmins}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200"
+                  >
+                    Recarregar
+                  </button>
+                </form>
+                {erroEquipe && <p className="text-sm text-red-600 mt-2">{erroEquipe}</p>}
+                {msgEquipe && <p className="text-sm text-emerald-600 mt-2">{msgEquipe}</p>}
+              </div>
+
+              {loadingEquipe ? (
+                <div className="bg-white rounded-2xl shadow p-8 text-center">
+                  <p className="text-gray-400">Carregando equipe...</p>
+                </div>
+              ) : adminsEquipe.length === 0 ? (
+                <div className="bg-white rounded-2xl shadow p-8 text-center">
+                  <p className="text-gray-400">Nenhum admin encontrado.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl shadow overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-50">
+                        <tr>
+                          <th className="text-left p-3 font-semibold text-slate-600">E-mail</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">User ID</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Criado em</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Status</th>
+                          <th className="text-left p-3 font-semibold text-slate-600">Acoes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminsEquipe.map(admin => (
+                          <tr key={admin.id} className="border-t border-slate-100">
+                            <td className="p-3 text-slate-700">{admin.email}</td>
+                            <td className="p-3 text-slate-500">{admin.user_id || '-'}</td>
+                            <td className="p-3 text-slate-500">{admin.created_at ? format(new Date(admin.created_at), 'dd/MM/yyyy HH:mm') : '-'}</td>
+                            <td className="p-3">
+                              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${admin.ativo ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}`}>
+                                {admin.ativo ? 'ativo' : 'inativo'}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              <button
+                                onClick={() => alternarAtivoAdmin(admin)}
+                                className={`text-xs font-semibold hover:underline ${admin.ativo ? 'text-red-600' : 'text-emerald-700'}`}
+                              >
+                                {admin.ativo ? 'Desativar' : 'Ativar'}
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

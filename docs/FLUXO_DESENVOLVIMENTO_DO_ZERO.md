@@ -97,6 +97,7 @@ O que entra aqui:
 - Lista de agendamentos
 - Busca rapida por nome, telefone e servico
 - Atalho de WhatsApp por agendamento
+- Gestao de equipe admin (adicionar e ativar/desativar)
 - Confirmação, conclusão e cancelamento
 - Filtros e visão operacional
 
@@ -111,6 +112,7 @@ Resultado esperado:
 - O administrador acessa uma área protegida
 - É possível operar a agenda sem depender do cliente
 - Contato com cliente fica mais rápido durante a operação diária
+- Controle de quem pode acessar o painel fica centralizado no proprio sistema
 
 ## Etapa 5 - Área do cliente
 
@@ -178,6 +180,7 @@ Arquivos principais:
 - `supabase_security_rules_step2.sql`
 - `supabase_security_migration_step2.sql`
 - `supabase_security_rules_step3.sql`
+- `supabase_security_rules_step4.sql`
 
 Resultado esperado:
 

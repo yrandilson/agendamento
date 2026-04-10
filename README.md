@@ -150,6 +150,26 @@ npm run dev
 
 ### 2026-04-09
 
+- **Gestão de administradores no painel (Equipe)**
+   - Commit: `pendente`
+   - Alterações:
+      - Nova seção `Equipe` no painel admin
+      - Lista de admins com status ativo/inativo
+      - Cadastro de novo admin por e-mail
+      - Ação para ativar/desativar admin sem sair do painel
+   - Arquivos:
+      - `src/pages/Admin.jsx`
+      - `supabase_security_rules_step4.sql`
+
+- **Hardening etapa 4 para governança de admins**
+   - Commit: `pendente`
+   - Alterações:
+      - Função SQL `is_admin_actor()` para validação de admin ativo
+      - Policies de `SELECT/INSERT/UPDATE` na tabela `admins`
+      - Campo `updated_at` para trilha de atualização
+   - Arquivo:
+      - `supabase_security_rules_step4.sql`
+
 - **Agenda admin com busca inteligente e atalho WhatsApp**
    - Commit: `pendente`
    - Alterações:
@@ -372,6 +392,7 @@ npm run dev
 > 2) `supabase_security_rules_step2.sql`
 > 3) `supabase_security_migration_step2.sql`
 > 4) `supabase_security_rules_step3.sql`
+> 5) `supabase_security_rules_step4.sql`
 
 ---
 

@@ -198,6 +198,22 @@ Resultado esperado:
 - contato com cliente fica disponível em um clique
 - fluxo antigo da agenda continua estável
 
+### Cenário 5 - Governança de acesso admin
+
+Dev 2 cria policies para permitir que apenas admins ativos gerenciem a tabela de admins.
+
+Dev 1 cria a seção Equipe no painel para listar, adicionar e ativar/desativar admins.
+
+Dev 3 valida que usuário comum não consegue alterar permissões.
+
+Dev 4 revisa riscos de segurança e consistência da regra.
+
+Resultado esperado:
+
+- gestão de acesso deixa de ser manual
+- equipe admin controla permissões sem sair do produto
+- segurança continua centralizada no banco
+
 ## Regras para não bagunçar o projeto
 
 - não trabalhar direto na `main`
