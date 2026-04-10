@@ -26,6 +26,21 @@ FROM clientes_unicos cu
 WHERE a.cliente_user_id IS NULL
   AND a.telefone_cliente = cu.telefone;
 
+-- Se ainda existirem agendamentos sem dono, associa a um cliente tecnico de migracao.
+-- Isso evita falha no NOT NULL e preserva o acesso via admin.
+DO $$
+DECLARE
+  migration_user_id uuid := '00000000-0000-0000-0000-000000000001';
+BEGIN
+  INSERT INTO clientes (user_id, email, nome, telefone)
+  VALUES (migration_user_id, 'legacy@system.local', 'Migracao Legada', '00000000000')
+  ON CONFLICT (user_id) DO NOTHING;
+
+  UPDATE agendamentos
+  SET cliente_user_id = migration_user_id
+  WHERE cliente_user_id IS NULL;
+END$$;
+
 -- Se ainda houver nulos, interrompa aqui e trate manualmente antes de seguir.
 -- SELECT id, data, horario, nome_cliente, telefone_cliente
 -- FROM agendamentos
