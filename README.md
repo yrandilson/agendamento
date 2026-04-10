@@ -294,6 +294,23 @@ npm run dev
       - `src/pages/Booking.jsx`
       - `supabase_security_rules.sql`
 
+- **Hardening etapa 2: ownership real e perfil no banco**
+   - Commit: `12529ae`
+   - Alterações:
+      - `agendamentos` agora gravam `cliente_user_id = auth.uid()`
+      - Nova tabela `clientes` para perfil persistente no Supabase
+      - `Minha Conta` e `Booking` passam a usar perfil no banco (com fallback)
+      - Histórico do cliente prioriza busca por `cliente_user_id`
+      - Novo script SQL com políticas RLS por dono/admin
+   - Arquivos:
+      - `src/pages/Booking.jsx`
+      - `src/pages/ClientAccount.jsx`
+      - `supabase_security_rules_step2.sql`
+
+> Importante: execute no Supabase, em ordem, os arquivos:
+> 1) `supabase_security_rules.sql`
+> 2) `supabase_security_rules_step2.sql`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
