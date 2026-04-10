@@ -131,7 +131,11 @@ export default function Booking() {
     })
 
     if (err) {
-      setError('Erro ao agendar. Tente novamente.')
+      if (err.code === '23505') {
+        setError('Este horario acabou de ser ocupado. Escolha outro horario.')
+      } else {
+        setError('Erro ao agendar. Tente novamente.')
+      }
       setLoading(false)
       return
     }

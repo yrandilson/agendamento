@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { isAdminUser } from '../lib/adminAuth'
 import { format, startOfMonth, subDays, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -37,10 +38,25 @@ export default function Admin() {
     : 'min-h-screen bg-[radial-gradient(circle_at_15%_20%,#dbeafe,transparent_30%),radial-gradient(circle_at_85%_5%,#cffafe,transparent_35%),#f1f5f9] md:flex'
 
   useEffect(() => {
+    validarAcessoAdmin()
+  }, [navigate])
+
+  async function validarAcessoAdmin() {
     if (!sessionStorage.getItem('admin_ok')) {
       navigate('/admin')
+      return
     }
-  }, [navigate])
+
+    const { data } = await supabase.auth.getUser()
+    const user = data?.user || null
+
+    const permitido = await isAdminUser(user)
+    if (!permitido) {
+      sessionStorage.removeItem('admin_ok')
+      sessionStorage.removeItem('admin_uid')
+      navigate('/admin')
+    }
+  }
 
   useEffect(() => {
     carregarServicos()
@@ -108,7 +124,9 @@ export default function Admin() {
   }
 
   function sair() {
+    supabase.auth.signOut()
     sessionStorage.removeItem('admin_ok')
+    sessionStorage.removeItem('admin_uid')
     navigate('/admin')
   }
 
