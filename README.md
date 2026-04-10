@@ -307,9 +307,22 @@ npm run dev
       - `src/pages/ClientAccount.jsx`
       - `supabase_security_rules_step2.sql`
 
+- **Hardening etapa 2B: migração legado e função pública segura**
+   - Commit: `1f0433c`
+   - Alterações:
+      - Backfill de `cliente_user_id` para agendamentos antigos via telefone
+      - Função SQL `horarios_ocupados_publico(date)` com `SECURITY DEFINER`
+      - Booking usa RPC para disponibilidade sem quebrar com RLS restrita
+      - Políticas da etapa 2 ajustadas para transição de legado
+   - Arquivos:
+      - `supabase_security_rules_step2.sql`
+      - `supabase_security_migration_step2.sql`
+      - `src/pages/Booking.jsx`
+
 > Importante: execute no Supabase, em ordem, os arquivos:
 > 1) `supabase_security_rules.sql`
 > 2) `supabase_security_rules_step2.sql`
+> 3) `supabase_security_migration_step2.sql`
 
 ---
 
