@@ -118,14 +118,22 @@ export default function Booking() {
   useEffect(() => {
     if (!selectedDate) return
     const dia = format(selectedDate, 'yyyy-MM-dd')
-    supabase
-      .from('agendamentos')
-      .select('horario')
-      .eq('data', dia)
-      .neq('status', 'cancelado')
-      .then(({ data }) => {
-        if (data) setOcupados(data.map(a => a.horario))
-      })
+    supabase.rpc('horarios_ocupados_publico', { p_data: dia }).then(({ data, error }) => {
+      if (!error && data) {
+        setOcupados(data.map(a => a.horario))
+        return
+      }
+
+      // Fallback temporario para ambientes sem a funcao criada.
+      supabase
+        .from('agendamentos')
+        .select('horario')
+        .eq('data', dia)
+        .neq('status', 'cancelado')
+        .then(({ data: fallbackData }) => {
+          if (fallbackData) setOcupados(fallbackData.map(a => a.horario))
+        })
+    })
   }, [selectedDate])
 
   async function confirmar() {

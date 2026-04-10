@@ -72,6 +72,15 @@ BEGIN
       FOR SELECT
       USING (
         auth.uid() = cliente_user_id
+        OR (
+          cliente_user_id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM clientes c
+            WHERE c.user_id = auth.uid()
+              AND c.telefone = agendamentos.telefone_cliente
+          )
+        )
         OR EXISTS (
           SELECT 1
           FROM admins a
@@ -88,6 +97,15 @@ BEGIN
       FOR UPDATE
       USING (
         auth.uid() = cliente_user_id
+        OR (
+          cliente_user_id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM clientes c
+            WHERE c.user_id = auth.uid()
+              AND c.telefone = agendamentos.telefone_cliente
+          )
+        )
         OR EXISTS (
           SELECT 1
           FROM admins a
@@ -97,6 +115,15 @@ BEGIN
       )
       WITH CHECK (
         auth.uid() = cliente_user_id
+        OR (
+          cliente_user_id IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM clientes c
+            WHERE c.user_id = auth.uid()
+              AND c.telefone = agendamentos.telefone_cliente
+          )
+        )
         OR EXISTS (
           SELECT 1
           FROM admins a
