@@ -12,6 +12,25 @@
 -- FROM agendamentos
 -- WHERE cliente_user_id IS NULL;
 
+-- Tenta preencher os registros restantes com base no telefone do cliente.
+WITH clientes_unicos AS (
+  SELECT telefone, min(user_id::text)::uuid AS user_id
+  FROM clientes
+  WHERE telefone IS NOT NULL
+  GROUP BY telefone
+  HAVING count(*) = 1
+)
+UPDATE agendamentos a
+SET cliente_user_id = cu.user_id
+FROM clientes_unicos cu
+WHERE a.cliente_user_id IS NULL
+  AND a.telefone_cliente = cu.telefone;
+
+-- Se ainda houver nulos, interrompa aqui e trate manualmente antes de seguir.
+-- SELECT id, data, horario, nome_cliente, telefone_cliente
+-- FROM agendamentos
+-- WHERE cliente_user_id IS NULL;
+
 -- 2) Tornar ownership obrigatorio
 ALTER TABLE agendamentos
   ALTER COLUMN cliente_user_id SET NOT NULL;
