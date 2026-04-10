@@ -230,6 +230,20 @@ Resultado esperado:
 - relatório exportado fica consistente com a visão do painel
 - operação diária ganha previsibilidade
 
+### Cenário 7 - Agenda extensa com paginação
+
+Dev 1 adiciona paginação para evitar listas longas e lentas na seção Agenda.
+
+Dev 3 valida se a paginação reseta corretamente ao mudar filtros.
+
+Dev 4 revisa se os números de itens e páginas estão coerentes com o resultado filtrado.
+
+Resultado esperado:
+
+- painel continua rápido mesmo com muitos agendamentos
+- navegação por lotes fica clara para a equipe
+- operação diária mantém contexto sem perda de desempenho visual
+
 ## Regras para não bagunçar o projeto
 
 - não trabalhar direto na `main`

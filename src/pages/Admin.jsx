@@ -46,6 +46,7 @@ export default function Admin() {
   const [filtroStatus, setFiltroStatus] = useState('todos') // 'todos', 'confirmado', 'concluido', 'cancelado'
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
+  const [paginaAgenda, setPaginaAgenda] = useState(1)
   const [novoAdminEmail, setNovoAdminEmail] = useState('')
   const [loadingEquipe, setLoadingEquipe] = useState(false)
   const [erroEquipe, setErroEquipe] = useState('')
@@ -88,6 +89,10 @@ export default function Admin() {
   useEffect(() => {
     carregar()
   }, [filtroData, vizaoAtiva])
+
+  useEffect(() => {
+    setPaginaAgenda(1)
+  }, [filtroServico, filtroBusca, filtroStatus, filtroData, vizaoAtiva])
 
   useEffect(() => {
     if (secaoAtiva === 'equipe') {
@@ -266,6 +271,12 @@ export default function Admin() {
   const dadosAgenda = filtroStatus === 'todos'
     ? dadosBusca
     : dadosBusca.filter(a => a.status === filtroStatus)
+
+  const itensPorPaginaAgenda = 8
+  const totalPaginasAgenda = Math.max(1, Math.ceil(dadosAgenda.length / itensPorPaginaAgenda))
+  const paginaAgendaAtual = Math.min(paginaAgenda, totalPaginasAgenda)
+  const inicioPaginaAgenda = (paginaAgendaAtual - 1) * itensPorPaginaAgenda
+  const dadosAgendaPaginados = dadosAgenda.slice(inicioPaginaAgenda, inicioPaginaAgenda + itensPorPaginaAgenda)
 
   const confirmadosAgenda = dadosAgenda.filter(a => a.status === 'confirmado').length
   const concluidosAgenda = dadosAgenda.filter(a => a.status === 'concluido').length
@@ -722,7 +733,7 @@ export default function Admin() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {dadosAgenda.map(a => (
+                  {dadosAgendaPaginados.map(a => (
                     <div
                       key={a.id}
                       className={`bg-white rounded-2xl shadow p-4 border-l-4 ${
@@ -782,6 +793,30 @@ export default function Admin() {
                       </div>
                     </div>
                   ))}
+
+                  {totalPaginasAgenda > 1 && (
+                    <div className="bg-white rounded-2xl shadow p-4 flex items-center justify-between flex-wrap gap-3">
+                      <p className="text-sm text-slate-500">
+                        Pagina {paginaAgendaAtual} de {totalPaginasAgenda} · {dadosAgenda.length} item(ns)
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPaginaAgenda(Math.max(1, paginaAgendaAtual - 1))}
+                          disabled={paginaAgendaAtual === 1}
+                          className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200"
+                        >
+                          Anterior
+                        </button>
+                        <button
+                          onClick={() => setPaginaAgenda(Math.min(totalPaginasAgenda, paginaAgendaAtual + 1))}
+                          disabled={paginaAgendaAtual === totalPaginasAgenda}
+                          className="px-3 py-2 rounded-lg bg-slate-100 text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-200"
+                        >
+                          Proxima
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>

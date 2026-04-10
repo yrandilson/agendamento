@@ -150,6 +150,16 @@ npm run dev
 
 ### 2026-04-09
 
+- **Paginação da Agenda no painel admin**
+   - Commit: `pendente`
+   - Alterações:
+      - Lista da agenda agora exibe páginas com limite de itens por tela
+      - Controles `Anterior` e `Proxima` para navegação
+      - Reset automático da paginação ao trocar filtros
+      - Contador com página atual, total de páginas e total de itens filtrados
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 - **Agenda admin com filtro por status e CSV aderente aos filtros**
    - Commit: `pendente`
    - Alterações:

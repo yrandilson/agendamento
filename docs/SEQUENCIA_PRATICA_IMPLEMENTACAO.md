@@ -251,18 +251,20 @@ Ordem recomendada de implementacao:
 2. listar agenda
 3. incluir busca por nome/telefone/servico na agenda
 4. incluir filtro por status na agenda
-5. incluir atalho de WhatsApp por agendamento
-6. acoes de status
-7. analytics
-8. auditoria
-9. gestao de equipe admin (listar, adicionar, ativar/desativar)
-10. exportacao CSV respeitando os filtros ativos
+5. incluir paginacao da lista da agenda
+6. incluir atalho de WhatsApp por agendamento
+7. acoes de status
+8. analytics
+9. auditoria
+10. gestao de equipe admin (listar, adicionar, ativar/desativar)
+11. exportacao CSV respeitando os filtros ativos
 
 Validacao:
 
 - admin visualiza agenda
 - admin consegue pesquisar rapidamente por cliente/telefone/servico
 - admin consegue filtrar por status com rapidez
+- admin consegue navegar agenda longa com paginacao
 - admin consegue iniciar contato por WhatsApp com um clique
 - status altera sem erro
 - analytics carrega
