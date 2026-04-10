@@ -276,6 +276,24 @@ npm run dev
    - Arquivo:
       - `src/pages/Admin.jsx`
 
+- **Hardening etapa 1: auth admin e regra anti-conflito**
+   - Commit: `53366d2`
+   - Alterações:
+      - Login admin por Supabase Auth (email + senha)
+      - Validação de permissão admin (whitelist por email e/ou tabela `admins`)
+      - Verificação de autorização também ao abrir o painel admin
+      - Tratamento amigável de erro de conflito de horário no booking
+      - Script SQL de segurança com:
+        - tabela `admins`
+        - índice único de slot ativo (`data + horario`)
+        - auditoria de alteração de status
+   - Arquivos:
+      - `src/lib/adminAuth.js`
+      - `src/pages/AdminLogin.jsx`
+      - `src/pages/Admin.jsx`
+      - `src/pages/Booking.jsx`
+      - `supabase_security_rules.sql`
+
 ---
 
 ## 🛠 Personalizar para seu cliente
