@@ -43,6 +43,7 @@ export default function Admin() {
   const [sidebarCompacta, setSidebarCompacta] = useState(false)
   const [filtroServico, setFiltroServico] = useState('todos')
   const [filtroBusca, setFiltroBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('todos') // 'todos', 'confirmado', 'concluido', 'cancelado'
   const [filtroData, setFiltroData] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [vizaoAtiva, setVizaoAtiva] = useState('hoje') // 'hoje', 'proximos', 'todos'
   const [novoAdminEmail, setNovoAdminEmail] = useState('')
@@ -228,7 +229,7 @@ export default function Admin() {
 
   function exportarAgendaCsv() {
     const header = ['Data', 'Horario', 'Cliente', 'Telefone', 'Servico', 'Status']
-    const linhas = dadosPeriodo.map(item => [
+    const linhas = dadosAgenda.map(item => [
       item.data,
       item.horario,
       item.nome_cliente,
@@ -255,12 +256,20 @@ export default function Admin() {
     : agendamentos.filter(a => a.servico_nome === filtroServico)
 
   const termoBusca = filtroBusca.trim().toLowerCase()
-  const dadosAgenda = termoBusca
+  const dadosBusca = termoBusca
     ? dadosPeriodo.filter(a => {
-      const alvo = `${a.nome_cliente || ''} ${a.telefone_cliente || ''} ${a.servico_nome || ''}`.toLowerCase()
-      return alvo.includes(termoBusca)
-    })
+        const alvo = `${a.nome_cliente || ''} ${a.telefone_cliente || ''} ${a.servico_nome || ''}`.toLowerCase()
+        return alvo.includes(termoBusca)
+      })
     : dadosPeriodo
+
+  const dadosAgenda = filtroStatus === 'todos'
+    ? dadosBusca
+    : dadosBusca.filter(a => a.status === filtroStatus)
+
+  const confirmadosAgenda = dadosAgenda.filter(a => a.status === 'confirmado').length
+  const concluidosAgenda = dadosAgenda.filter(a => a.status === 'concluido').length
+  const canceladosAgenda = dadosAgenda.filter(a => a.status === 'cancelado').length
 
   const confirmados = dadosPeriodo.filter(a => a.status === 'confirmado')
   const cancelados = dadosPeriodo.filter(a => a.status === 'cancelado')
@@ -674,6 +683,20 @@ export default function Admin() {
                     className="text-sm bg-transparent outline-none w-full"
                   />
                 </div>
+
+                <div className="bg-white border-2 border-gray-200 rounded-xl px-3 py-2">
+                  <label className="text-xs text-gray-500 mr-2">Status</label>
+                  <select
+                    value={filtroStatus}
+                    onChange={e => setFiltroStatus(e.target.value)}
+                    className="text-sm bg-transparent outline-none"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="concluido">Concluido</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
               </div>
 
               {vizaoAtiva === 'hoje' && (
@@ -686,7 +709,7 @@ export default function Admin() {
                     className="border-2 rounded-lg p-2 focus:border-indigo-500 outline-none"
                   />
                   <span className="text-gray-400 text-sm">
-                    {confirmados.length} confirmado(s) · {concluidos.length} concluido(s) · {cancelados.length} cancelado(s)
+                    {confirmadosAgenda} confirmado(s) · {concluidosAgenda} concluido(s) · {canceladosAgenda} cancelado(s)
                   </span>
                 </div>
               )}

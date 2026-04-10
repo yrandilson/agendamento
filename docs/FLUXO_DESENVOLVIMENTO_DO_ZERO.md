@@ -96,6 +96,7 @@ O que entra aqui:
 - Login do admin
 - Lista de agendamentos
 - Busca rapida por nome, telefone e servico
+- Filtro rapido por status
 - Atalho de WhatsApp por agendamento
 - Gestao de equipe admin (adicionar e ativar/desativar)
 - Confirmação, conclusão e cancelamento

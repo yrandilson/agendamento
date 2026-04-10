@@ -250,22 +250,25 @@ Ordem recomendada de implementacao:
 1. validar acesso admin
 2. listar agenda
 3. incluir busca por nome/telefone/servico na agenda
-4. incluir atalho de WhatsApp por agendamento
-5. acoes de status
-6. analytics
-7. auditoria
-8. gestao de equipe admin (listar, adicionar, ativar/desativar)
-9. exportacao CSV
+4. incluir filtro por status na agenda
+5. incluir atalho de WhatsApp por agendamento
+6. acoes de status
+7. analytics
+8. auditoria
+9. gestao de equipe admin (listar, adicionar, ativar/desativar)
+10. exportacao CSV respeitando os filtros ativos
 
 Validacao:
 
 - admin visualiza agenda
 - admin consegue pesquisar rapidamente por cliente/telefone/servico
+- admin consegue filtrar por status com rapidez
 - admin consegue iniciar contato por WhatsApp com um clique
 - status altera sem erro
 - analytics carrega
 - auditoria aparece
 - equipe de admins pode ser gerenciada no proprio painel
+- CSV exportado bate com os filtros exibidos na agenda
 
 ## Etapa 9 - Hardening do banco (sequencia obrigatoria)
 

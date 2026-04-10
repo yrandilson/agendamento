@@ -150,6 +150,16 @@ npm run dev
 
 ### 2026-04-09
 
+- **Agenda admin com filtro por status e CSV aderente aos filtros**
+   - Commit: `pendente`
+   - Alterações:
+      - Novo filtro por status (todos, confirmado, concluido, cancelado)
+      - Lista da agenda passa a combinar filtros de serviço, busca e status
+      - Contadores da agenda refletem os itens filtrados
+      - Exportação CSV passa a usar o mesmo conjunto filtrado exibido na tela
+   - Arquivo:
+      - `src/pages/Admin.jsx`
+
 - **Gestão de administradores no painel (Equipe)**
    - Commit: `pendente`
    - Alterações:

@@ -214,6 +214,22 @@ Resultado esperado:
 - equipe admin controla permissões sem sair do produto
 - segurança continua centralizada no banco
 
+### Cenário 6 - Agenda com filtros consistentes para operação
+
+Dev 1 adiciona filtro por status para reduzir tempo de triagem da agenda.
+
+Dev 1 ajusta a exportação CSV para respeitar os mesmos filtros visuais da tela.
+
+Dev 3 valida se o total exibido na agenda bate com o CSV gerado.
+
+Dev 4 revisa se não houve regressão em ações de concluir/cancelar.
+
+Resultado esperado:
+
+- equipe enxerga exatamente o recorte operacional necessário
+- relatório exportado fica consistente com a visão do painel
+- operação diária ganha previsibilidade
+
 ## Regras para não bagunçar o projeto
 
 - não trabalhar direto na `main`
