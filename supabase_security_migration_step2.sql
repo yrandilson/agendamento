@@ -6,7 +6,7 @@
 -- 1) Backfill de ownership em agendamentos legados por telefone.
 -- Regra: vincula quando telefone bate com perfil unico em clientes.
 WITH clientes_unicos AS (
-  SELECT telefone, min(user_id) AS user_id
+  SELECT telefone, min(user_id::text)::uuid AS user_id
   FROM clientes
   WHERE telefone IS NOT NULL
   GROUP BY telefone
