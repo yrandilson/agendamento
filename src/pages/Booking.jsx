@@ -48,37 +48,62 @@ export default function Booking() {
   useEffect(() => {
     let ativo = true
 
-    supabase.auth.getUser().then(({ data }) => {
+    async function carregarSessaoCliente() {
+      const { data } = await supabase.auth.getUser()
       if (ativo) {
         const user = data?.user || null
         setAuthUser(user)
         if (user) {
-          const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
-          if (salvo) {
-            try {
-              const perfil = JSON.parse(salvo)
-              setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
-            } catch {
-              setForm({ nome: '', telefone: '' })
+          const { data: perfilDb } = await supabase
+            .from('clientes')
+            .select('nome, telefone')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          if (perfilDb) {
+            setForm({ nome: perfilDb.nome || '', telefone: perfilDb.telefone || '' })
+          } else {
+            const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
+            if (salvo) {
+              try {
+                const perfil = JSON.parse(salvo)
+                setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
+              } catch {
+                setForm({ nome: '', telefone: '' })
+              }
             }
           }
         }
       }
-    })
+    }
+
+    carregarSessaoCliente()
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user || null
       setAuthUser(user)
       if (user) {
-        const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
-        if (salvo) {
-          try {
-            const perfil = JSON.parse(salvo)
-            setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
-          } catch {
-            setForm({ nome: '', telefone: '' })
-          }
-        }
+        supabase
+          .from('clientes')
+          .select('nome, telefone')
+          .eq('user_id', user.id)
+          .maybeSingle()
+          .then(({ data: perfilDb }) => {
+            if (perfilDb) {
+              setForm({ nome: perfilDb.nome || '', telefone: perfilDb.telefone || '' })
+              return
+            }
+
+            const salvo = localStorage.getItem(`cliente_perfil_${user.id}`)
+            if (salvo) {
+              try {
+                const perfil = JSON.parse(salvo)
+                setForm({ nome: perfil.nome || '', telefone: perfil.telefone || '' })
+              } catch {
+                setForm({ nome: '', telefone: '' })
+              }
+            }
+          })
       } else {
         setForm({ nome: '', telefone: '' })
       }
@@ -116,11 +141,20 @@ export default function Booking() {
 
     localStorage.setItem(`cliente_perfil_${authUser.id}`, JSON.stringify({ nome: form.nome, telefone: form.telefone }))
 
+    await supabase.from('clientes').upsert({
+      user_id: authUser.id,
+      email: authUser.email,
+      nome: form.nome,
+      telefone: form.telefone,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' })
+
     setLoading(true)
     setError('')
     const dia = format(selectedDate, 'yyyy-MM-dd')
 
     const { error: err } = await supabase.from('agendamentos').insert({
+      cliente_user_id: authUser.id,
       nome_cliente: form.nome,
       telefone_cliente: form.telefone,
       servico_id: selectedService.id,
