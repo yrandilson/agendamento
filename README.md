@@ -150,6 +150,17 @@ npm run dev
 
 ### 2026-04-09
 
+- **Dashboard do cliente com menu lateral, contatos, chat e calendario**
+   - Commit: `pendente`
+   - Alterações:
+      - Área do cliente evoluída para layout de dashboard com menu lateral
+      - Seções: Visão Geral, Calendário de Agendamento, Contatos, Chat e Configurações
+      - Menu circular no topo com dropdown para atalhos rápidos da conta
+      - Fluxo de calendário envia data/horário para a tela de agendamento
+   - Arquivos:
+      - `src/pages/ClientAccount.jsx`
+      - `src/pages/Booking.jsx`
+
 - **Paginação da Agenda no painel admin**
    - Commit: `pendente`
    - Alterações:

@@ -17,6 +17,7 @@ export default function Booking() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [authUser, setAuthUser] = useState(null)
+  const [agendaRapida, setAgendaRapida] = useState(null)
 
   const dias = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i + 1))
 
@@ -44,6 +45,43 @@ export default function Booking() {
 
     localStorage.removeItem('cliente_reagendar')
   }, [services])
+
+  useEffect(() => {
+    const raw = localStorage.getItem('cliente_agenda_rapida')
+    if (!raw) return
+
+    try {
+      const draft = JSON.parse(raw)
+      if (draft?.data) {
+        setAgendaRapida({ data: draft.data, horario: draft.horario || null })
+      }
+    } catch {
+      // Ignora rascunho inválido.
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!selectedService || !agendaRapida) return
+
+    const dia = new Date(`${agendaRapida.data}T00:00:00`)
+    if (!Number.isNaN(dia.getTime())) {
+      setSelectedDate(dia)
+      if (agendaRapida.horario) {
+        setSelectedTime(agendaRapida.horario)
+        setStep(4)
+      } else {
+        setStep(3)
+      }
+    }
+
+    localStorage.removeItem('cliente_agenda_rapida')
+    setAgendaRapida(null)
+  }, [selectedService, agendaRapida])
+
+  function selecionarServico(servico) {
+    setSelectedService(servico)
+    setStep(2)
+  }
 
   useEffect(() => {
     let ativo = true
@@ -251,7 +289,7 @@ export default function Booking() {
               {services.length === 0 && <p className="text-gray-400">Carregando serviços...</p>}
               <div className="space-y-3">
                 {services.map(s => (
-                  <button key={s.id} onClick={() => { setSelectedService(s); setStep(2) }}
+                  <button key={s.id} onClick={() => selecionarServico(s)}
                     className="w-full text-left p-4 border-2 rounded-xl hover:border-cyan-500 hover:bg-cyan-50 transition-all">
                     <div className="font-semibold text-gray-800">{s.nome}</div>
                     <div className="text-sm text-gray-500">{s.duracao_min} min · R$ {Number(s.preco).toFixed(2)}</div>

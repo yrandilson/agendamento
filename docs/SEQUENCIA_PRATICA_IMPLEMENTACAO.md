@@ -185,12 +185,16 @@ Regras importantes:
 - consultar `agendamentos` por `cliente_user_id`
 - permitir atualizar somente dados do proprio cliente
 - ao sair da conta, redirecionar para `/cliente`
+- usar menu lateral para separar seções de conta (visão geral, calendário, contatos, chat, configurações)
+- no calendário, salvar data/horário pré-selecionados e redirecionar para `/agendar`
 
 Validacao:
 
 - perfil salva corretamente
 - lista proximos e historico
 - reagendamento volta para `/agendar` com rascunho
+- dashboard do cliente abre com menu lateral e navegação por seções
+- calendário leva para tela de agendamento com data/horário sugeridos
 
 ## Etapa 7 - Login admin e autorizacao
 

@@ -244,6 +244,22 @@ Resultado esperado:
 - navegação por lotes fica clara para a equipe
 - operação diária mantém contexto sem perda de desempenho visual
 
+### Cenário 8 - Dashboard moderno da área do cliente
+
+Dev 1 cria menu lateral na conta do cliente com seções de navegação.
+
+Dev 1 implementa módulos de Contatos, Chat e Calendário de Agendamento.
+
+Dev 3 valida o fluxo: escolher data/horário no calendário e seguir para a tela de agendar.
+
+Dev 4 revisa consistência visual e responsividade em desktop e mobile.
+
+Resultado esperado:
+
+- cliente encontra recursos de forma mais rápida
+- interface fica mais moderna e preenchida
+- fluxo de agendamento começa com contexto definido pelo usuário
+
 ## Regras para não bagunçar o projeto
 
 - não trabalhar direto na `main`

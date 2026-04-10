@@ -126,6 +126,7 @@ O que entra aqui:
 - Perfil com nome e telefone
 - Histórico de agendamentos
 - Cancelamento e reagendamento
+- Dashboard do cliente com menu lateral e seções (contatos, chat e calendário)
 
 Arquivos principais:
 
@@ -138,6 +139,7 @@ Resultado esperado:
 - O cliente deixa de ser apenas um formulário solto
 - Existe vínculo real com o usuário autenticado
 - O sistema passa a ter experiência de conta
+- A área do cliente ganha navegação moderna e mais contexto de uso
 
 ## Etapa 6 - UX e visual
 
