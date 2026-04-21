@@ -21,6 +21,7 @@ Transformar o sistema atual em uma plataforma completa de agendamento com:
 - cliente com dashboard, menu lateral, historico e reagendamento
 - auditoria de status
 - hardening RLS ate etapa 4 (governanca de admins)
+- **Sprint 1 (nov 2026): politicas configuraveis, bloqueio de horarios, profissionais e equipe, buffer entre atendimentos**
 
 ### Parcial
 
@@ -32,15 +33,12 @@ Transformar o sistema atual em uma plataforma completa de agendamento com:
 - selecao dinamica por profissional/unidade/faixa de preco
 - pagamento online (pix/cartao)
 - agenda multi-visualizacao (dia/semana/mes/colunas por profissional)
-- bloqueio de horarios e escala por profissional
 - CRM com historico rico e preferencias
 - lista de espera inteligente
 - lembretes multicanal (email/sms/whatsapp com janelas)
 - confirmacao por clique no link
 - sincronizacao Google/Outlook/iCal
 - NPS automatico
-- buffer entre atendimentos
-- politicas de cancelamento configuraveis
 - servicos combinados
 
 ## Backlog estruturado por modulo

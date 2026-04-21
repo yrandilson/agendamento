@@ -1,9 +1,12 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isAdminUser } from '../lib/adminAuth'
 import { format, startOfMonth, subDays, subMonths } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import BlockSchedule from '../components/admin/BlockSchedule'
+import TeamManager from '../components/admin/TeamManager'
+import SettingsPolicies from '../components/admin/SettingsPolicies'
 
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -38,7 +41,7 @@ export default function Admin() {
   const [auditoriaData, setAuditoriaData] = useState([])
   const [adminsEquipe, setAdminsEquipe] = useState([])
   const [precoPorServico, setPrecoPorServico] = useState({})
-  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises', 'auditoria', 'equipe'
+  const [secaoAtiva, setSecaoAtiva] = useState('dashboard') // 'dashboard', 'agenda', 'analises', 'auditoria', 'equipe', 'bloqueios', 'politicas'
   const [temaEscuro, setTemaEscuro] = useState(false)
   const [sidebarCompacta, setSidebarCompacta] = useState(false)
   const [filtroServico, setFiltroServico] = useState('todos')
@@ -432,6 +435,22 @@ export default function Admin() {
           >
             {sidebarCompacta ? 'E' : '👥 Equipe'}
           </button>
+          <button
+            onClick={() => setSecaoAtiva('bloqueios')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'bloqueios' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            {sidebarCompacta ? 'B' : '🚫 Bloqueios'}
+          </button>
+          <button
+            onClick={() => setSecaoAtiva('politicas')}
+            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
+              secaoAtiva === 'politicas' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-300'
+            }`}
+          >
+            {sidebarCompacta ? 'P' : '⚙️ Politicas'}
+          </button>
         </nav>
         <div className="mt-auto">
           {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
@@ -501,6 +520,22 @@ export default function Admin() {
             >
               Equipe
             </button>
+            <button
+              onClick={() => setSecaoAtiva('bloqueios')}
+              className={`px-4 py-2 whitespace-nowrap rounded-xl font-semibold text-sm ${
+                secaoAtiva === 'bloqueios' ? 'bg-red-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              Bloqueios
+            </button>
+            <button
+              onClick={() => setSecaoAtiva('politicas')}
+              className={`px-4 py-2 whitespace-nowrap rounded-xl font-semibold text-sm ${
+                secaoAtiva === 'politicas' ? 'bg-cyan-600 text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+            >
+              Politicas
+            </button>
           </div>
 
           <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
@@ -521,7 +556,11 @@ export default function Admin() {
                         ? 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'
                         : secaoAtiva === 'auditoria'
                           ? 'Quem alterou status, quando alterou e qual foi a mudanca.'
-                          : 'Adicione admins, acompanhe status ativo e controle o acesso ao painel.'}
+                          : secaoAtiva === 'equipe'
+                            ? 'Gerencie admins e profissionais.'
+                            : secaoAtiva === 'bloqueios'
+                              ? 'Bloqueie horarios por motivo ou dia.'
+                              : 'Configure regras de negocio.'}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1057,8 +1096,14 @@ export default function Admin() {
                   </div>
                 </div>
               )}
+
+              <TeamManager />
             </>
           )}
+
+          {secaoAtiva === 'bloqueios' && <BlockSchedule />}
+
+          {secaoAtiva === 'politicas' && <SettingsPolicies />}
         </div>
 
         <Link

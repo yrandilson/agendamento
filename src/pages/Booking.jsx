@@ -4,15 +4,26 @@ import { Link } from 'react-router-dom'
 import { format, addDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-const HORARIOS = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+const HORARIOS = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30']
+
+const BUFFER_MINUTOS = 15
+
+function adicionarBuffer(horario, minutos) {
+  const [h, m] = horario.split(':').map(Number)
+  const totalMin = h * 60 + m + minutos
+  const newH = Math.floor(totalMin / 60) % 24
+  const newM = totalMin % 60
+  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+}
 
 export default function Booking() {
-  const [step, setStep] = useState(1) // 1: serviço, 2: data, 3: horário, 4: dados, 5: confirmado
+  const [step, setStep] = useState(1)
   const [services, setServices] = useState([])
   const [selectedService, setSelectedService] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
   const [selectedTime, setSelectedTime] = useState(null)
   const [ocupados, setOcupados] = useState([])
+  const [bloqueados, setBloqueados] = useState([])
   const [form, setForm] = useState({ nome: '', telefone: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -140,12 +151,31 @@ export default function Booking() {
   useEffect(() => {
     if (!selectedDate) return
     const dia = format(selectedDate, 'yyyy-MM-dd')
-    supabase.rpc('horarios_ocupados_publico', { p_data: dia }).then(({ data, error }) => {
-      if (error) {
-        setOcupados([])
-      } else {
-        setOcupados((data || []).map(a => a.horario))
+
+    Promise.all([
+      supabase.rpc('horarios_ocupados_publico', { p_data: dia }),
+      supabase.from('bloqueios').select('horario_inicio, horario_fim').eq('data', dia)
+    ]).then(([agendRes, blockRes]) => {
+      const agendHorarios = (agendRes.data || []).map(a => a.horario)
+
+      const blockHorarios = []
+      if (blockRes.data) {
+        blockRes.data.forEach(b => {
+          if (b.horario_inicio && b.horario_fim) {
+            let found = false
+            for (const h of HORARIOS) {
+              if (h < b.horario_inicio) continue
+              if (h > b.horario_fim) break
+              blockHorarios.push(h)
+              if (h === b.horario_fim) found = true
+              if (found) break
+            }
+          }
+        })
       }
+
+      setBloqueados(blockHorarios)
+      setOcupados(agendHorarios)
     })
   }, [selectedDate])
 
@@ -324,21 +354,41 @@ export default function Booking() {
               <h2 className="text-xl font-semibold mb-1 text-gray-700">Escolha o horário</h2>
               <p className="text-sm text-gray-400 mb-4">
                 {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                {BUFFER_MINUTOS > 0 && <span className="text-xs text-cyan-500 ml-1"> (+{BUFFER_MINUTOS}min buffer)</span>}
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {HORARIOS.map(h => {
+                {HORARIOS.map((h, idx) => {
                   const ocupado = ocupados.includes(h)
+                  const bloqueado = bloqueados.includes(h)
+
+                  const proximoBloqueado = HORARIOS.find((b, bi) => {
+                    if (bi <= idx) return false
+                    const bloqueadoPos = HORARIOS.indexOf(b)
+                    return bloqueados.includes(b) && HORARIOS.indexOf(h) < bloqueadoPos
+                  })
+
+                  const comBuffer = HORARIOS.slice(idx + 1, idx + 1 + Math.ceil(BUFFER_MINUTOS / 30))
+                    .some(hb => ocupados.includes(hb))
+
+                  const indisponivel = ocupado || bloqueado || comBuffer
+
                   return (
-                    <button key={h} disabled={ocupado}
+                    <button key={h} disabled={indisponivel}
                       onClick={() => { setSelectedTime(h); setStep(4) }}
-                      className={`p-3 border-2 rounded-xl font-medium transition-all
-                        ${ocupado ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
+                      className={`p-3 border-2 rounded-xl font-medium transition-all text-xs
+                        ${indisponivel
+                          ? 'bg-gray-100 text-gray-300 border-gray-100 cursor-not-allowed'
                           : 'hover:border-cyan-500 hover:bg-cyan-50 text-gray-700'}`}>
-                      {ocupado ? <s>{h}</s> : h}
+                      {indisponivel ? <s>{h}</s> : h}
                     </button>
                   )
                 })}
               </div>
+              {bloqueados.length > 0 && (
+                <p className="text-xs text-amber-600 mt-3 bg-amber-50 rounded-lg p-2">
+                  Alguns horários estão bloqueados pela equipe. Use os disponíveis.
+                </p>
+              )}
             </div>
           )}
 
