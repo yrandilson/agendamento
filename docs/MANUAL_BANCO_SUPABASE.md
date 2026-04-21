@@ -2,6 +2,18 @@
 
 Este guia explica, de forma pratica, o que cada etapa SQL faz no projeto e por que ela existe.
 
+## Indice
+
+1. [Ordem oficial de execucao](#ordem-oficial-de-execucao)
+2. [Etapa 1 - Base do sistema](#etapa-1---base-do-sistema-supabase_schemasql)
+3. [Etapa 2 - Hardening inicial](#etapa-2---hardening-inicial-supabase_security_rulessql)
+4. [Etapa 3 - Ownership real do cliente](#etapa-3---ownership-real-do-cliente-supabase_security_rules_step2sql)
+5. [Etapa 4 - Migracao segura](#etapa-4---migracao-segura-supabase_security_migration_step2sql)
+6. [Etapa 5 - RLS estrita sem legado](#etapa-5---rls-estrita-sem-legado-supabase_security_rules_step3sql)
+7. [Etapa 6 - Governanca de admins](#etapa-6---governanca-de-admins-supabase_security_rules_step4sql)
+8. [Etapa 7 - Sprint 1](#etapa-7---sprint-1-supabase_sprint1sql)
+9. [Dicionario rapido de comandos SQL usados](#dicionario-rapido-de-comandos-sql-usados)
+
 ## Ordem oficial de execucao
 
 1. `supabase_schema.sql`
