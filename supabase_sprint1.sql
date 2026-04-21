@@ -61,15 +61,52 @@ ALTER TABLE config_politicas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profissionais ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bloqueios ENABLE ROW LEVEL SECURITY;
 
--- Profissionais: admin pode tudo, cliente vê apenas ativos
+-- Helper: verifica se usuario e admin ativo via session
+CREATE OR REPLACE FUNCTION is_admin_session()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM admins a
+    WHERE a.user_id = auth.uid() AND a.ativo = true
+    LIMIT 1
+  );
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- Helper: admin via email configurado
+CREATE OR REPLACE FUNCTION is_admin_by_email()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM admins a
+    WHERE lower(a.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+      AND a.ativo = true
+    LIMIT 1
+  );
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- Profissionais: apenas admins ativos veem e gerenciam
 CREATE POLICY "admin_gerencia_profissionais" ON profissionais
-  FOR ALL USING (auth.role() = 'authenticated');
+  FOR ALL USING (
+    is_admin_session() = true OR is_admin_by_email() = true
+  );
 
 CREATE POLICY "admin_gerencia_bloqueios" ON bloqueios
-  FOR ALL USING (auth.role() = 'authenticated');
+  FOR ALL USING (
+    is_admin_session() = true OR is_admin_by_email() = true
+  );
 
 CREATE POLICY "admin_gerencia_politicas" ON config_politicas
-  FOR ALL USING (auth.role() = 'authenticated');
+  FOR ALL USING (
+    is_admin_session() = true OR is_admin_by_email() = true
+  );
+
+-- Leitura minima para o fluxo de booking autenticado.
+CREATE POLICY "bloqueios_select_authenticated" ON bloqueios
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "politicas_buffer_select_authenticated" ON config_politicas
+  FOR SELECT USING (
+    auth.role() = 'authenticated' AND chave = 'buffer_minutos'
+  );
 
 -- ============================================================
 -- FUNÇÕES AUXILIARES

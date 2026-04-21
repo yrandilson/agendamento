@@ -6,16 +6,6 @@ import { ptBR } from 'date-fns/locale'
 
 const HORARIOS = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30']
 
-const BUFFER_MINUTOS = 15
-
-function adicionarBuffer(horario, minutos) {
-  const [h, m] = horario.split(':').map(Number)
-  const totalMin = h * 60 + m + minutos
-  const newH = Math.floor(totalMin / 60) % 24
-  const newM = totalMin % 60
-  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
-}
-
 export default function Booking() {
   const [step, setStep] = useState(1)
   const [services, setServices] = useState([])
@@ -24,6 +14,7 @@ export default function Booking() {
   const [selectedTime, setSelectedTime] = useState(null)
   const [ocupados, setOcupados] = useState([])
   const [bloqueados, setBloqueados] = useState([])
+  const [bufferMinutos, setBufferMinutos] = useState(15)
   const [form, setForm] = useState({ nome: '', telefone: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -36,6 +27,15 @@ export default function Booking() {
     supabase.from('servicos').select('*').then(({ data }) => {
       if (data) setServices(data)
     })
+
+    supabase
+      .from('config_politicas')
+      .select('valor')
+      .eq('chave', 'buffer_minutos')
+      .single()
+      .then(({ data }) => {
+        if (data) setBufferMinutos(parseInt(data.valor) || 15)
+      })
   }, [])
 
   useEffect(() => {
@@ -354,20 +354,13 @@ export default function Booking() {
               <h2 className="text-xl font-semibold mb-1 text-gray-700">Escolha o horário</h2>
               <p className="text-sm text-gray-400 mb-4">
                 {format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
-                {BUFFER_MINUTOS > 0 && <span className="text-xs text-cyan-500 ml-1"> (+{BUFFER_MINUTOS}min buffer)</span>}
+                {bufferMinutos > 0 && <span className="text-xs text-cyan-500 ml-1"> (+{bufferMinutos}min buffer)</span>}
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {HORARIOS.map((h, idx) => {
                   const ocupado = ocupados.includes(h)
                   const bloqueado = bloqueados.includes(h)
-
-                  const proximoBloqueado = HORARIOS.find((b, bi) => {
-                    if (bi <= idx) return false
-                    const bloqueadoPos = HORARIOS.indexOf(b)
-                    return bloqueados.includes(b) && HORARIOS.indexOf(h) < bloqueadoPos
-                  })
-
-                  const comBuffer = HORARIOS.slice(idx + 1, idx + 1 + Math.ceil(BUFFER_MINUTOS / 30))
+                  const comBuffer = HORARIOS.slice(idx + 1, idx + 1 + Math.ceil(bufferMinutos / 30))
                     .some(hb => ocupados.includes(hb))
 
                   const indisponivel = ocupado || bloqueado || comBuffer

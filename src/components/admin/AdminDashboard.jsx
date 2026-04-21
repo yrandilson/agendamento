@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { DashboardMetrics, AnalyticsData } from '../../types';
-import { COLORS, DASHBOARD } from '../../config/constants';
+import { DASHBOARD } from '../../config/constants';
 
 /**
  * Dashboard do Admin com KPIs e gráficos
  */
 export const AdminDashboard = ({ onRefresh }) => {
-  const [metrics, setMetrics] = useState<DashboardMetrics>({
+  const [metrics, setMetrics] = useState({
     total: 0,
     confirmados: 0,
     concluidos: 0,
@@ -17,7 +16,7 @@ export const AdminDashboard = ({ onRefresh }) => {
     clientes_unicos: 0
   });
   
-  const [analytics, setAnalytics] = useState<AnalyticsData>({
+  const [analytics, setAnalytics] = useState({
     ultimos_30_dias: [],
     ranking_servicos: [],
     comparativo_mensal: { mes_atual: 0, mes_anterior: 0, variacao: 0 }

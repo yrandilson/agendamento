@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Appointment } from '../types';
 
 /**
  * Hook para gerenciar agendamentos
  * Fornece lógica comum para busca, criação e atualização de agendamentos
  */
 export const useAppointments = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Appointment } from '../../types';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
-import { COLORS, STATUS_COLORS } from '../../config/constants';
+import { STATUS_COLORS } from '../../config/constants';
 
 /**
  * Componente para gerenciar agendamentos
  */
 export const AppointmentManager = ({ filters = {}, onRefresh }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,9 +39,12 @@ export const AppointmentManager = ({ filters = {}, onRefresh }) => {
       }
 
       // Calcular paginação
-      const { count } = await query;
+      const { count } = await supabase
+        .from('agendamentos')
+        .select('*', { count: 'exact', head: true });
+
       setTotalItems(count || 0);
-      const totalPages = Math.ceil(count / pageSize);
+      const totalPages = Math.max(1, Math.ceil((count || 0) / pageSize));
       setTotalPages(totalPages);
 
       // Buscar dados com paginação

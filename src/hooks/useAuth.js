@@ -1,18 +1,17 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, AuthContextType } from '../types';
 import { useErrorHandler } from './useErrorHandler';
 
 /**
  * Contexto de autenticação global
  */
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 /**
  * Provedor de contexto de autenticação
  */
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const { handleError, error } = useErrorHandler();

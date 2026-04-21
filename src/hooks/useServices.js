@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Service } from '../types';
 import { useErrorHandler } from './useErrorHandler';
 
 /**
@@ -8,7 +7,7 @@ import { useErrorHandler } from './useErrorHandler';
  * Fornece lógica para buscar, criar e atualizar serviços
  */
 export const useServices = () => {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const { handleError, error } = useErrorHandler();
 
