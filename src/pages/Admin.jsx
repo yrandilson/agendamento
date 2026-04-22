@@ -380,6 +380,44 @@ export default function Admin() {
 
   const variacaoVolume = variacaoPercentual(volumeMesAtual, volumeMesAnterior)
   const variacaoFaturamento = variacaoPercentual(faturamentoMesAtual, faturamentoMesAnterior)
+  const secaoMeta = {
+    dashboard: {
+      badge: 'Dashboard Avancado',
+      titulo: 'Visao de desempenho do negocio',
+      descricao: 'Acompanhe agenda, receita e horarios de pico em tempo real.'
+    },
+    agenda: {
+      badge: 'Agenda Operacional',
+      titulo: 'Gestao dos agendamentos',
+      descricao: 'Filtre por periodo e gerencie cada atendimento com poucos cliques.'
+    },
+    analises: {
+      badge: 'Analises de Performance',
+      titulo: 'Leitura estrategica dos resultados',
+      descricao: 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'
+    },
+    auditoria: {
+      badge: 'Trilha de Auditoria',
+      titulo: 'Historico de alteracoes do sistema',
+      descricao: 'Quem alterou status, quando alterou e qual foi a mudanca.'
+    },
+    equipe: {
+      badge: 'Gestao de Equipe',
+      titulo: 'Administradores e profissionais',
+      descricao: 'Gerencie acessos do painel e organizacao da equipe.'
+    },
+    bloqueios: {
+      badge: 'Disponibilidade',
+      titulo: 'Bloqueio de horarios da agenda',
+      descricao: 'Bloqueie horarios por motivo, dia ou profissional.'
+    },
+    politicas: {
+      badge: 'Regras de Negocio',
+      titulo: 'Politicas configuraveis do sistema',
+      descricao: 'Defina buffer, cancelamento e regras operacionais.'
+    }
+  }
+  const secaoAtual = secaoMeta[secaoAtiva] || secaoMeta.dashboard
 
   return (
     <div className={shellClass}>
@@ -456,16 +494,42 @@ export default function Admin() {
           {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
           {!sidebarCompacta && <p className="text-sm break-all text-slate-200">{window.location.origin}</p>}
           {!sidebarCompacta && (
-            <Link to="/" className="mt-3 inline-flex text-sm text-cyan-300 hover:underline">
-              Voltar para o site
+            <Link to="/" className="mt-3 w-full inline-flex justify-center items-center text-sm font-semibold px-3 py-2 rounded-xl bg-cyan-400/20 text-cyan-200 border border-cyan-300/30 hover:bg-cyan-400/30 transition-all">
+              ← Voltar para o site
             </Link>
           )}
-          <button onClick={sair} className="mt-4 text-sm text-red-300 hover:underline">{sidebarCompacta ? 'Sair' : 'Encerrar sessao'}</button>
+          <button
+            onClick={sair}
+            className={`mt-3 ${sidebarCompacta ? 'w-full' : 'w-full'} inline-flex justify-center items-center text-sm font-semibold px-3 py-2 rounded-xl bg-red-500/20 text-red-200 border border-red-300/30 hover:bg-red-500/30 transition-all`}
+          >
+            {sidebarCompacta ? 'Sair' : 'Encerrar sessao'}
+          </button>
         </div>
       </aside>
 
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
+          <div className={`hidden md:flex backdrop-blur border rounded-2xl shadow-sm p-3 mb-4 items-center justify-between ${temaEscuro ? 'bg-slate-900/70 border-slate-700' : 'bg-white/80 border-white'}`}>
+            <div>
+              <p className={`text-xs uppercase tracking-widest ${temaEscuro ? 'text-slate-400' : 'text-slate-500'}`}>Painel Administrativo</p>
+              <p className={`text-sm font-semibold ${temaEscuro ? 'text-slate-200' : 'text-slate-700'}`}>{secaoAtual.titulo}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/"
+                className={`text-sm px-4 py-2 rounded-xl font-semibold transition-all ${temaEscuro ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-300/30 hover:bg-cyan-500/30' : 'bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100'}`}
+              >
+                ← Voltar para o site
+              </Link>
+              <button
+                onClick={sair}
+                className={`text-sm px-4 py-2 rounded-xl font-semibold transition-all ${temaEscuro ? 'bg-red-500/20 text-red-300 border border-red-300/30 hover:bg-red-500/30' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'}`}
+              >
+                Encerrar sessao
+              </button>
+            </div>
+          </div>
+
           <div className={`backdrop-blur border rounded-2xl shadow-sm p-3 mb-4 flex items-center justify-between md:hidden ${temaEscuro ? 'bg-slate-900/70 border-slate-700' : 'bg-white/80 border-white'}`}>
             <Link to="/" className={`text-sm font-semibold hover:underline ${temaEscuro ? 'text-cyan-300' : 'text-slate-700'}`}>← Voltar</Link>
             <div className="flex items-center gap-3">
@@ -541,27 +605,9 @@ export default function Admin() {
           <div className="bg-gradient-to-r from-indigo-600 to-cyan-500 text-white rounded-3xl p-6 shadow-xl mb-6">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-widest text-indigo-100">
-                  {secaoAtiva === 'dashboard' ? 'Dashboard Avancado' : secaoAtiva === 'agenda' ? 'Agenda Operacional' : secaoAtiva === 'analises' ? 'Analises de Performance' : secaoAtiva === 'auditoria' ? 'Trilha de Auditoria' : 'Gestao de Equipe'}
-                </p>
-                <h2 className="text-2xl md:text-3xl font-black">
-                  {secaoAtiva === 'dashboard' ? 'Visao de desempenho do negocio' : secaoAtiva === 'agenda' ? 'Gestao dos agendamentos' : secaoAtiva === 'analises' ? 'Leitura estrategica dos resultados' : secaoAtiva === 'auditoria' ? 'Historico de alteracoes do sistema' : 'Administradores e permissoes'}
-                </h2>
-                <p className="text-indigo-100 mt-1">
-                  {secaoAtiva === 'dashboard'
-                    ? 'Acompanhe agenda, receita e horarios de pico em tempo real.'
-                    : secaoAtiva === 'agenda'
-                      ? 'Filtre por periodo e gerencie cada atendimento com poucos cliques.'
-                      : secaoAtiva === 'analises'
-                        ? 'Acompanhe ultimos 30 dias para apoiar decisoes de crescimento.'
-                        : secaoAtiva === 'auditoria'
-                          ? 'Quem alterou status, quando alterou e qual foi a mudanca.'
-                          : secaoAtiva === 'equipe'
-                            ? 'Gerencie admins e profissionais.'
-                            : secaoAtiva === 'bloqueios'
-                              ? 'Bloqueie horarios por motivo ou dia.'
-                              : 'Configure regras de negocio.'}
-                </p>
+                <p className="text-xs uppercase tracking-widest text-indigo-100">{secaoAtual.badge}</p>
+                <h2 className="text-2xl md:text-3xl font-black">{secaoAtual.titulo}</h2>
+                <p className="text-indigo-100 mt-1">{secaoAtual.descricao}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
