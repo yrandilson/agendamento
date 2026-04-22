@@ -437,6 +437,15 @@ export default function Admin() {
     }
   }
   const secaoAtual = secaoMeta[secaoAtiva] || secaoMeta.dashboard
+  const itensMenu = [
+    { id: 'dashboard', label: 'Dashboard', icon: '▣', activeClass: 'bg-indigo-600 text-white' },
+    { id: 'agenda', label: 'Agenda', icon: '☰', activeClass: 'bg-indigo-600 text-white' },
+    { id: 'analises', label: 'Analises', icon: '◉', activeClass: 'bg-indigo-600 text-white' },
+    { id: 'auditoria', label: 'Auditoria', icon: '⎘', activeClass: 'bg-indigo-600 text-white' },
+    { id: 'equipe', label: 'Equipe', icon: '👥', activeClass: 'bg-indigo-600 text-white' },
+    { id: 'bloqueios', label: 'Bloqueios', icon: '🚫', activeClass: 'bg-red-600 text-white' },
+    { id: 'politicas', label: 'Politicas', icon: '⚙️', activeClass: 'bg-cyan-600 text-white' }
+  ]
 
   return (
     <div className={shellClass}>
@@ -448,66 +457,23 @@ export default function Admin() {
             className="text-xs px-2 py-1 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700"
             title="Expandir/recolher menu"
           >
-            {sidebarCompacta ? '>>' : '<<'}
+            {sidebarCompacta ? '»' : '«'}
           </button>
         </div>
         <nav className="space-y-2">
-          <button
-            onClick={() => setSecaoAtiva('dashboard')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'dashboard' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'D' : '▣ Dashboard'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('agenda')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'agenda' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'A' : '☰ Agenda'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('analises')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'analises' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'N' : '◉ Analises'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('auditoria')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'auditoria' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'L' : '⎘ Auditoria'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('equipe')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'equipe' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'E' : '👥 Equipe'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('bloqueios')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'bloqueios' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'B' : '🚫 Bloqueios'}
-          </button>
-          <button
-            onClick={() => setSecaoAtiva('politicas')}
-            className={`w-full text-left px-3 py-2 rounded-xl font-semibold ${
-              secaoAtiva === 'politicas' ? 'bg-cyan-600 text-white' : 'bg-slate-800 text-slate-300'
-            }`}
-          >
-            {sidebarCompacta ? 'P' : '⚙️ Politicas'}
-          </button>
+          {itensMenu.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setSecaoAtiva(item.id)}
+              title={item.label}
+              className={`w-full px-3 py-2 rounded-xl font-semibold transition-all duration-200 ${
+                sidebarCompacta ? 'flex items-center justify-center' : 'flex items-center gap-2 text-left'
+              } ${secaoAtiva === item.id ? item.activeClass : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+            >
+              <span className="text-base leading-none">{item.icon}</span>
+              {!sidebarCompacta && <span>{item.label}</span>}
+            </button>
+          ))}
         </nav>
         <div className="mt-auto">
           {!sidebarCompacta && <p className="text-xs text-slate-400 mb-2">Acesso rapido</p>}
