@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { isAdminUser } from '../lib/adminAuth'
 
@@ -7,8 +7,21 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
+  const [toast, setToast] = useState('')
   const [loading, setLoading] = useState(false)
+  const location = useLocation()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (location.state?.logoutSucesso) {
+      setToast('Sessao encerrada com sucesso.')
+
+      navigate(location.pathname, { replace: true, state: null })
+
+      const timer = setTimeout(() => setToast(''), 3500)
+      return () => clearTimeout(timer)
+    }
+  }, [location, navigate])
 
   async function entrar() {
     setErro('')
@@ -50,6 +63,11 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">
         <h1 className="text-2xl font-bold text-gray-700 mb-6 text-center">🔐 Painel Admin</h1>
+        {toast && (
+          <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-700">
+            {toast}
+          </div>
+        )}
         <input type="email" placeholder="E-mail admin"
           value={email} onChange={e => setEmail(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && entrar()}

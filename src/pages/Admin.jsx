@@ -247,7 +247,7 @@ export default function Admin() {
       await supabase.auth.signOut()
       sessionStorage.removeItem('admin_ok')
       sessionStorage.removeItem('admin_uid')
-      navigate('/admin')
+      navigate('/admin', { state: { logoutSucesso: true } })
     } finally {
       setEncerrandoSessao(false)
       setConfirmarSaida(false)
