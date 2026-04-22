@@ -13,6 +13,7 @@ Este guia explica, de forma pratica, o que cada etapa SQL faz no projeto e por q
 7. [Etapa 6 - Governanca de admins](#etapa-6---governanca-de-admins-supabase_security_rules_step4sql)
 8. [Etapa 7 - Sprint 1](#etapa-7---sprint-1-supabase_sprint1sql)
 9. [Dicionario rapido de comandos SQL usados](#dicionario-rapido-de-comandos-sql-usados)
+10. [Glossario SQL (conceitos e significado)](#glossario-sql-conceitos-e-significado)
 
 ## Ordem oficial de execucao
 
@@ -104,3 +105,56 @@ Este guia explica, de forma pratica, o que cada etapa SQL faz no projeto e por q
 - `DO $$ ... $$`: bloco procedural para logica condicional.
 - `CREATE TRIGGER`: executa funcao automaticamente em eventos.
 - `ON CONFLICT DO NOTHING/UPDATE`: trata duplicidade sem erro.
+
+## Glossario SQL (conceitos e significado)
+
+1. `CREATE TABLE`: cria uma tabela nova.
+2. `PRIMARY KEY`: identificador unico da linha (nao repete e nao pode ser nulo).
+3. `UUID`: tipo de identificador global unico.
+4. `DEFAULT gen_random_uuid()`: gera UUID automaticamente ao inserir.
+5. `TEXT`: campo de texto livre.
+6. `BOOLEAN`: campo verdadeiro/falso.
+7. `INTEGER`: numero inteiro.
+8. `DECIMAL(p,s)`: numero com casas decimais controladas.
+9. `TIMESTAMP`: data e hora sem fuso.
+10. `TIMESTAMPTZ`: data e hora com fuso horario.
+11. `DEFAULT now()`: preenche data/hora atual por padrao.
+12. `REFERENCES tabela(coluna)`: chave estrangeira para relacionamento entre tabelas.
+13. `CHECK (condicao)`: valida regra de valor na coluna.
+14. `UNIQUE`: impede valores duplicados.
+15. `CREATE INDEX`: acelera consultas por filtro/ordenacao.
+16. `CREATE UNIQUE INDEX`: acelera e tambem garante unicidade.
+17. `INSERT INTO`: insere dados novos.
+18. `ON CONFLICT DO NOTHING`: ignora duplicidade sem erro.
+19. `ON CONFLICT DO UPDATE`: atualiza quando houver conflito.
+20. `ALTER TABLE`: altera estrutura/configuracao de tabela existente.
+21. `ADD COLUMN`: adiciona coluna nova.
+22. `ALTER COLUMN ... SET NOT NULL`: torna campo obrigatorio.
+23. `ENABLE ROW LEVEL SECURITY`: ativa seguranca por linha (RLS).
+24. `CREATE POLICY`: define regra de acesso com RLS.
+25. `USING`: condicao para leitura/alteracao de linhas existentes.
+26. `WITH CHECK`: condicao para inserir/atualizar novos valores.
+27. `DROP POLICY IF EXISTS`: remove policy antiga sem quebrar reexecucao.
+28. `auth.uid()`: retorna id do usuario autenticado na sessao.
+29. `auth.jwt()`: le dados do token JWT (ex.: email).
+30. `auth.role()`: papel da requisicao (`anon` ou `authenticated`).
+31. `CREATE OR REPLACE FUNCTION`: cria ou atualiza funcao.
+32. `RETURNS`: define tipo de retorno da funcao.
+33. `LANGUAGE sql|plpgsql`: define linguagem da funcao.
+34. `SECURITY DEFINER`: executa com permissao do dono da funcao.
+35. `SET search_path = public`: fixa schema padrao para evitar ambiguidade.
+36. `GRANT EXECUTE ON FUNCTION`: concede permissao de executar funcao.
+37. `REVOKE ALL ON FUNCTION`: remove permissoes anteriores da funcao.
+38. `DO $$ ... $$`: bloco procedural anonimo para migracoes/condicionais.
+39. `IF NOT EXISTS` (em bloco `DO`): cria objeto apenas se ainda nao existir.
+40. `WITH ...` (CTE): consulta temporaria nomeada para reaproveito.
+41. `UPDATE ... FROM ...`: atualiza com base em outra consulta/tabela.
+42. `CREATE TRIGGER`: executa funcao automaticamente em evento da tabela.
+43. `AFTER UPDATE`: trigger dispara apos atualizacao.
+44. `FOR EACH ROW`: trigger roda para cada linha alterada.
+45. `DROP TRIGGER IF EXISTS`: remove trigger sem erro se nao existir.
+46. `EXISTS (subquery)`: retorna verdadeiro se a subconsulta tiver ao menos 1 linha.
+47. `COALESCE(a,b)`: usa `a`; se nulo, usa `b`.
+48. `lower(texto)`: normaliza texto para comparacao sem diferenca de maiusculas/minusculas.
+49. `NULL` e `NOT NULL`: permite ou proibe valor vazio.
+50. `ORDER BY ... NULLS FIRST`: ordena e coloca nulos primeiro.
