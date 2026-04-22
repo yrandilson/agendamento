@@ -54,6 +54,8 @@ export default function Admin() {
   const [loadingEquipe, setLoadingEquipe] = useState(false)
   const [erroEquipe, setErroEquipe] = useState('')
   const [msgEquipe, setMsgEquipe] = useState('')
+  const [confirmarSaida, setConfirmarSaida] = useState(false)
+  const [encerrandoSessao, setEncerrandoSessao] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadingAnalytics, setLoadingAnalytics] = useState(true)
   const navigate = useNavigate()
@@ -228,11 +230,28 @@ export default function Admin() {
     await atualizarStatus(id, 'concluido')
   }
 
-  function sair() {
-    supabase.auth.signOut()
-    sessionStorage.removeItem('admin_ok')
-    sessionStorage.removeItem('admin_uid')
-    navigate('/admin')
+  function abrirConfirmacaoSaida() {
+    setConfirmarSaida(true)
+  }
+
+  function fecharConfirmacaoSaida() {
+    if (encerrandoSessao) return
+    setConfirmarSaida(false)
+  }
+
+  async function sair() {
+    if (encerrandoSessao) return
+
+    setEncerrandoSessao(true)
+    try {
+      await supabase.auth.signOut()
+      sessionStorage.removeItem('admin_ok')
+      sessionStorage.removeItem('admin_uid')
+      navigate('/admin')
+    } finally {
+      setEncerrandoSessao(false)
+      setConfirmarSaida(false)
+    }
   }
 
   function exportarAgendaCsv() {
@@ -499,7 +518,7 @@ export default function Admin() {
             </Link>
           )}
           <button
-            onClick={sair}
+            onClick={abrirConfirmacaoSaida}
             className={`mt-3 ${sidebarCompacta ? 'w-full' : 'w-full'} inline-flex justify-center items-center text-sm font-semibold px-3 py-2 rounded-xl bg-red-500/20 text-red-200 border border-red-300/30 hover:bg-red-500/30 transition-all`}
           >
             {sidebarCompacta ? 'Sair' : 'Encerrar sessao'}
@@ -522,7 +541,7 @@ export default function Admin() {
                 ← Voltar para o site
               </Link>
               <button
-                onClick={sair}
+                onClick={abrirConfirmacaoSaida}
                 className={`text-sm px-4 py-2 rounded-xl font-semibold transition-all ${temaEscuro ? 'bg-red-500/20 text-red-300 border border-red-300/30 hover:bg-red-500/30' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'}`}
               >
                 Encerrar sessao
@@ -539,7 +558,7 @@ export default function Admin() {
               >
                 {temaEscuro ? 'Claro' : 'Escuro'}
               </button>
-              <button onClick={sair} className="text-sm font-semibold text-red-500 hover:underline">Sair</button>
+              <button onClick={abrirConfirmacaoSaida} className="text-sm font-semibold text-red-500 hover:underline">Sair</button>
             </div>
           </div>
 
@@ -1158,6 +1177,35 @@ export default function Admin() {
         >
           + Novo agendamento
         </Link>
+
+        {confirmarSaida && (
+          <div className="fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className={`w-full max-w-md rounded-2xl shadow-2xl border p-5 ${temaEscuro ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-800'}`}>
+              <p className={`text-xs uppercase tracking-widest ${temaEscuro ? 'text-slate-400' : 'text-slate-500'}`}>Sessao administrativa</p>
+              <h3 className="text-xl font-black mt-2">Encerrar sessao agora?</h3>
+              <p className={`text-sm mt-2 ${temaEscuro ? 'text-slate-300' : 'text-slate-600'}`}>
+                Voce sera redirecionado para a tela de login do painel admin.
+              </p>
+
+              <div className="mt-5 flex items-center justify-end gap-2">
+                <button
+                  onClick={fecharConfirmacaoSaida}
+                  disabled={encerrandoSessao}
+                  className={`px-4 py-2 rounded-xl font-semibold ${temaEscuro ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={sair}
+                  disabled={encerrandoSessao}
+                  className="px-4 py-2 rounded-xl font-semibold bg-red-600 text-white hover:bg-red-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {encerrandoSessao ? 'Encerrando sessao...' : 'Sim, encerrar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )
