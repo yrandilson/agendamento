@@ -1,4 +1,11 @@
-node_modules/
+﻿node_modules/
 .env
+.env.*
+!.env.example
 dist/
+build/
 *.log
+*.sqlite
+*.db
+coverage/
+.vscode/
